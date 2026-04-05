@@ -1,7 +1,5 @@
-This web app is for our assignment, class CSS3133 Object Oriented Programming
+This web app is for our assignment on CSS3133 Object Oriented Programming
 
-Front-end: Andreas
-Mid-end: Elvin
-Back-end: Anthony
+The best web app made possible by Elvin, Andreas and Anthony!
 
 Due Date: 25th May 2026
