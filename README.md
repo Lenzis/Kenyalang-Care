@@ -1,4 +1,4 @@
-Kenyalang Care
+Kenyalang Care, your gateway to Sarawak assistance programmes.
 
 <img width="2816" height="1536" alt="Logo Dark Transparent" src="https://github.com/user-attachments/assets/e40d4843-34b9-4183-bf67-da1e4be4820b" />
 The best web app made possible by Elvin, Andreas and Anthony!
