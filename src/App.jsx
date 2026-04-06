@@ -102,7 +102,7 @@ const App = () => {
       applyBtn: 'Submit Application',
       close: 'Close',
       logoutNote: 'Logging Out...',
-      matchTitle: 'Filter', // Changed from Manual Filter
+      matchTitle: 'Filter',
       matchSubtitle: 'Eligibility Check',
       filters: {
         incomeMin: 'Min Income (RM)',
@@ -112,7 +112,7 @@ const App = () => {
         employment: { label: 'Employment Status', levels: ['Any', 'Student', 'Working', 'Pensioner'] },
         marital: { label: 'Marital Status', levels: ['Any', 'Single', 'Married', 'Divorced'] }
       },
-      heyReplies: ["Matching aid to profile...", "Highlighting best aids! ✨", "Welcome back, Alexander! 🦅"],
+      heyReplies: ["Matching aid to profile...", "Highlighting best aids! ✨", "Welcome back! 🦅"],
       profile: { guest: 'Guest User', user: 'Verified Citizen', combined: 'Log In / Sign Up', logout: 'Log Out', verified: 'Verified Account', signup: 'Sign Up' },
       profileTitle: 'Digital Identity',
       profileSub: 'Verified Profile Data',
@@ -146,7 +146,7 @@ const App = () => {
       applyBtn: 'Hantar Sekarang',
       close: 'Tutup',
       logoutNote: 'Sedang Log Keluar...',
-      matchTitle: 'Penapis', // Changed from Penapis Manual
+      matchTitle: 'Penapis',
       matchSubtitle: 'Semak Kelayakan',
       filters: {
         incomeMin: 'Pendapatan Min (RM)',
@@ -156,7 +156,7 @@ const App = () => {
         employment: { label: 'Status Pekerjaan', levels: ['Semua', 'Pelajar', 'Bekerja', 'Pesara'] },
         marital: { label: 'Status Perkahwinan', levels: ['Semua', 'Bujang', 'Berkahwin', 'Duda/Janda'] }
       },
-      heyReplies: ["Memadankan bantuan...", "Menonjolkan padanan terbaik! ✨", "Selamat kembali, Alexander! 🦅"],
+      heyReplies: ["Memadankan bantuan...", "Menonjolkan padanan terbaik! ✨", "Selamat kembali! 🦅"],
       profile: { guest: 'Pengguna Tamu', user: 'Rakyat Disahkan', combined: 'Log Masuk / Daftar', logout: 'Log Keluar', verified: 'Akaun Disahkan', signup: 'Daftar' },
       profileTitle: 'Identiti Digital Saya',
       profileSub: 'Data Profil Disahkan',
@@ -165,7 +165,7 @@ const App = () => {
     }
   };
 
-  // --- Core Handlers ---
+  // --- Handlers ---
   const triggerBugAnimation = () => {
     if (isReportingBug) return;
     setIsReportingBug(true);
@@ -263,7 +263,9 @@ const App = () => {
     setAuthError(null);
   };
 
-  // --- Logic Hooks ---
+  // --- Search & Filter Logic ---
+  const isEmailInput = useMemo(() => authIdentity.length > 0 && !/^[0-9-]*$/.test(authIdentity), [authIdentity]);
+
   const filteredServices = useMemo(() => {
     let list = SERVICES_DATA;
     const q = searchQuery.toLowerCase().trim();
@@ -295,6 +297,13 @@ const App = () => {
     return matchesAge && matchesIncome;
   };
 
+  const recommendedServices = useMemo(() => SERVICES_DATA.slice(0, 3), []);
+  const hasIntentMatch = useMemo(() => {
+    const q = searchQuery.toLowerCase();
+    return ['money', 'duit', 'sick', 'sakit', 'hospital'].some(word => q.includes(word));
+  }, [searchQuery]);
+
+  // --- Effects ---
   useEffect(() => {
     const suggestions = t[language].searchSuggestions;
     let wordIdx = 0;
@@ -322,27 +331,6 @@ const App = () => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  useEffect(() => {
-    if (isLoggedIn) {
-      setAgeInput('28');
-      setMinIncome('3500');
-      setMaxIncome('3500');
-      setShowAdjustableFilters(false);
-    } else {
-      setAgeInput('');
-      setMinIncome('');
-      setMaxIncome('');
-    }
-  }, [isLoggedIn]);
-
-  useEffect(() => {
-    if (!isLoggedIn && (ageInput || minIncome || maxIncome)) {
-      setIsMatching(true);
-      const timer = setTimeout(() => setIsMatching(false), 600);
-      return () => clearTimeout(timer);
-    }
-  }, [ageInput, minIncome, maxIncome, isLoggedIn]);
 
   return (
     <div className={`min-h-screen transition-colors duration-500 ${darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
@@ -383,10 +371,10 @@ const App = () => {
                 <div className="p-2 space-y-1">
                   {!isLoggedIn ? (
                     <>
-                      <button onClick={() => openAuth('login')} className={`w-full flex items-center gap-3 p-4 rounded-2xl font-bold text-sm transition-all ${darkMode ? 'hover:bg-yellow-600/10 text-yellow-500' : 'hover:bg-black hover:text-white'}`}>
+                      <button onClick={() => openAuth('login')} className={`w-full flex items-center gap-3 p-4 rounded-2xl font-bold text-sm transition-all ${darkMode ? 'hover:bg-yellow-600/10 text-yellow-500' : 'hover:bg-slate-100'}`}>
                         <LogIn className="w-5 h-5" /> {t[language].authTitle.login}
                       </button>
-                      <button onClick={() => openAuth('signup')} className={`w-full flex items-center gap-3 p-4 rounded-2xl font-bold text-sm transition-all ${darkMode ? 'hover:bg-yellow-600/10 text-yellow-500' : 'hover:bg-black hover:text-white'}`}>
+                      <button onClick={() => openAuth('signup')} className={`w-full flex items-center gap-3 p-4 rounded-2xl font-bold text-sm transition-all ${darkMode ? 'hover:bg-yellow-600/10 text-yellow-500' : 'hover:bg-slate-100'}`}>
                         <UserPlus className="w-5 h-5" /> {t[language].profile.signup}
                       </button>
                     </>
@@ -398,7 +386,7 @@ const App = () => {
                   )}
                   <div className="p-4 grid grid-cols-2 gap-2 border-t border-slate-800/10">
                     <button onClick={() => setLanguage(language === 'en' ? 'ms' : 'en')} className="p-2 rounded-xl border text-xs font-bold uppercase hover:bg-yellow-500/10">{language}</button>
-                    <button onClick={() => setDarkMode(!darkMode)} className="p-2 rounded-xl border text-xs font-bold uppercase transition-colors hover:bg-yellow-500/10">{darkMode ? 'Light' : 'Dark'}</button>
+                    <button onClick={() => setDarkMode(!darkMode)} className="p-2 rounded-xl border text-xs font-bold uppercase hover:bg-yellow-500/10">{darkMode ? 'Light' : 'Dark'}</button>
                   </div>
                   {isLoggedIn && <button onClick={handleLogout} className="w-full p-4 text-red-500 font-bold text-sm flex items-center gap-3 active:scale-95 transition-all"><LogOut className="w-5 h-5" /> {t[language].profile.logout}</button>}
                 </div>
@@ -424,7 +412,7 @@ const App = () => {
                   <div className="w-10 h-10 bg-yellow-500 rounded-xl flex items-center justify-center text-black shadow-lg"><Filter className="w-5 h-5" /></div>
                   <h2 className="text-lg font-bold uppercase tracking-tight">{t[language].matchTitle}</h2>
                 </div>
-                <button onClick={() => { setAgeInput(''); setMinIncome(''); setMaxIncome(''); setEmploymentIdx(0); setMaritalIdx(0); }} className="text-[10px] font-bold text-red-500 uppercase hover:underline">Reset</button>
+                <button onClick={() => { setAgeInput(''); setMinIncome(''); setMaxIncome(''); }} className="text-[10px] font-bold text-red-500 uppercase hover:underline">Reset</button>
               </div>
               <div className="space-y-6">
                 <div className="space-y-2">
@@ -452,10 +440,19 @@ const App = () => {
         )}
 
         <div className="space-y-4">
+          {searchQuery && hasIntentMatch && filteredServices.length > 0 && (
+            <div className="p-4 mb-6 rounded-2xl bg-yellow-500/10 border border-yellow-500/20 flex items-center gap-4 animate-in fade-in slide-in-from-left-4">
+               <div className="w-10 h-10 bg-yellow-500 rounded-xl flex items-center justify-center text-black shadow-lg"><Lightbulb className="w-5 h-5 animate-pulse" /></div>
+               <div><p className="text-[10px] font-bold uppercase tracking-widest text-yellow-600">{t[language].bestMatch}</p><p className="text-sm font-bold opacity-80 leading-tight">Priority aid matching your search intent.</p></div>
+            </div>
+          )}
+
+          {filteredServices.length === 0 && <div className="py-20 text-center opacity-30 font-bold uppercase tracking-[0.2em]">{t[language].noResults}</div>}
+
           {filteredServices.map(cat => {
             const isMatch = checkProfileMatch(cat);
             return (
-              <div key={cat.id} className={`rounded-3xl border-2 transition-all duration-500 backdrop-blur-md ${expandedCategoryId === cat.id ? 'scale-[1.01]' : 'border-slate-800/10'} ${isMatch ? 'border-yellow-500 shadow-[0_0_30px_rgba(234,179,8,0.25)] ring-1 ring-yellow-500/30' : 'border-slate-800/10'} ${darkMode ? (isMatch ? 'bg-yellow-500/10' : 'bg-white/10') : (isMatch ? 'bg-yellow-500/5 shadow-yellow-500/10' : 'bg-white/80 shadow-slate-200/50')}`}>
+              <div key={cat.id} className={`rounded-3xl border-2 transition-all duration-500 backdrop-blur-md ${expandedCategoryId === cat.id ? 'scale-[1.01]' : 'border-slate-800/10'} ${isMatch ? 'border-yellow-500 shadow-[0_0_30px_rgba(234,179,8,0.25)] ring-1 ring-yellow-500/30' : 'border-slate-800/10'} ${darkMode ? (isMatch ? 'bg-yellow-500/10' : 'bg-white/10') : (isMatch ? 'bg-yellow-500/5' : 'bg-white/80 shadow-slate-200/50')}`}>
                 <div onClick={() => toggleCategory(cat.id)} className="p-6 cursor-pointer flex items-center gap-6 relative overflow-hidden">
                   {isMatch && <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/10 via-yellow-500/5 to-transparent animate-pulse-slow pointer-events-none" />}
                   <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors relative z-10 ${expandedCategoryId === cat.id || isMatch ? 'bg-yellow-500 text-black shadow-lg shadow-yellow-500/30' : 'bg-slate-800/10'}`}>{cat.icon}</div>
@@ -483,7 +480,7 @@ const App = () => {
       {/* Auth Modal */}
       {showAuthModal && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
-          <div className={`w-full max-w-md rounded-[3rem] p-10 relative shadow-2xl animate-in zoom-in-95 ${darkMode ? 'bg-slate-900 border-2 border-yellow-500/20' : 'bg-white'}`}>
+          <div className={`w-full max-w-md rounded-[3rem] p-10 relative shadow-[0_0_50px_rgba(202,138,4,0.15)] animate-in zoom-in-95 ${darkMode ? 'bg-slate-900 border-2 border-yellow-500/20' : 'bg-white'}`}>
             <div className="text-center mb-8">
               <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 transition-all duration-500 ${isIdentityVerified ? 'bg-green-500/20 scale-110' : 'bg-yellow-500/10'}`}>
                 {isVerifying ? <Loader2 className="w-10 h-10 text-yellow-500 animate-spin" /> : (isIdentityVerified ? <ShieldCheck className="w-10 h-10 text-green-500" /> : (authType === 'login' ? <ShieldQuestion className="w-10 h-10 text-yellow-500" /> : <UserPlus className="w-10 h-10 text-yellow-500" />))}
@@ -505,11 +502,6 @@ const App = () => {
                 <div className="relative flex flex-col">
                   <input required disabled={isVerifying} type="text" value={authIdentity} onChange={handleIdentityChange} placeholder={t[language].authPlaceholder} className={`w-full p-5 font-bold outline-none transition-all duration-300 rounded-2xl border-2 ${isEmailInput && !isIdentityVerified ? 'pb-14 h-[100px]' : 'h-[64px]'} ${isIdentityVerified ? 'border-green-500/50 bg-green-500/5' : (authError ? 'border-red-500/50 bg-red-500/5' : (darkMode ? 'bg-slate-800 border-slate-700 focus:border-yellow-500' : 'bg-slate-50 border-slate-200 focus:border-black'))}`} />
                   {isIdentityVerified && <div className="absolute right-4 top-1/2 -translate-y-1/2 text-green-500 animate-in zoom-in"><Check className="w-6 h-6 stroke-[3px]" /></div>}
-                  {isEmailInput && authIdentity.length > 2 && !isIdentityVerified && (
-                    <div className="absolute left-4 bottom-3 flex flex-wrap gap-1.5 animate-in slide-in-from-bottom-1 fade-in duration-300">
-                      {['@gmail.com', '@yahoo.com'].map(suffix => <button key={suffix} type="button" onClick={() => addEmailSuffix(suffix)} className={`text-[9px] font-extrabold uppercase px-2 py-1 rounded-lg transition-all border ${darkMode ? 'bg-slate-700/50 border-slate-600 text-yellow-500' : 'bg-white border-slate-200 text-slate-600'}`}>{suffix}</button>)}
-                    </div>
-                  )}
                 </div>
               </div>
               {(isIdentityVerified || authType === 'signup') && (
