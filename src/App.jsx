@@ -3,7 +3,7 @@ import {
   Search, Moon, Sun, Globe, ClipboardCheck,
   ChevronRight, ChevronDown, BookOpen, 
   GraduationCap, Briefcase, Calculator, Building2, 
-  Map, Droplets, Landmark, FileText, Heart, UtilityPole,
+  Map as MapIcon, Droplets, Landmark, FileText, Heart, UtilityPole,
   Sparkles, Eye, Lock, X, MessageCircle, AlertTriangle, Bug,
   User, Settings, LogOut, Check, Wallet, CalendarDays, Stethoscope, Users,
   Filter, Sparkle, ShieldCheck, Info, LogIn, UserPlus, Clock, Send, FileSearch,
@@ -11,6 +11,7 @@ import {
   Phone, Edit3, ShieldAlert, ShieldQuestion, Loader2, Landmark as Bank, Sprout, 
   Gavel, Waves, Zap, FileUp, Droplet
 } from 'lucide-react';
+import { supabase } from "./supabaseClient";
 
 // --- Complete 16-Category Service Data ---
 const SERVICES_DATA = [
@@ -55,12 +56,19 @@ const App = () => {
   const [authType, setAuthType] = useState('login'); 
   const [showPassword, setShowPassword] = useState(false);
   const [authIdentity, setAuthIdentity] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
   const [isIdentityVerified, setIsIdentityVerified] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [verifiedIC, setVerifiedIC] = useState('');
   const [authError, setAuthError] = useState(null);
+  const [authLoading, setAuthLoading] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  // Supabase services (real-time)
+  const [services, setServices] = useState(SERVICES_DATA);
+  const [servicesLoading, setServicesLoading] = useState(false);
+  const [servicesError, setServicesError] = useState(null);
 
   // Filter States (Guest Mode)
   const [minIncome, setMinIncome] = useState(''); 
@@ -71,6 +79,23 @@ const App = () => {
 
   const menuRef = useRef(null);
   const privacyUrl = "https://www.termsfeed.com/live/adceebaa-54af-463f-8fbb-e6bafd896862";
+
+  const iconByKey = useMemo(
+    () => ({
+      GraduationCap: <GraduationCap className="w-8 h-8" />,
+      BookOpen: <BookOpen className="w-8 h-8" />,
+      Calculator: <Calculator className="w-8 h-8" />,
+      Heart: <Heart className="w-8 h-8" />,
+      FileText: <FileText className="w-8 h-8" />,
+      Briefcase: <Briefcase className="w-8 h-8" />,
+      Building2: <Building2 className="w-8 h-8" />,
+      Droplets: <Droplets className="w-8 h-8" />,
+      Map: <MapIcon className="w-8 h-8" />,
+      Landmark: <Landmark className="w-8 h-8" />,
+      UtilityPole: <UtilityPole className="w-8 h-8" />
+    }),
+    []
+  );
 
   // --- Translations ---
   const t = {
@@ -165,6 +190,83 @@ const App = () => {
     }
   };
 
+  // --- Supabase: load + realtime subscribe (if keys are set) ---
+  useEffect(() => {
+    if (!supabase) return;
+    let cancelled = false;
+
+    async function loadFromSupabase() {
+      try {
+        setServicesLoading(true);
+        setServicesError(null);
+
+        const { data: cats, error: catsErr } = await supabase
+          .from("service_category")
+          .select("id,title_en,title_ms,icon_key,sort_order")
+          .order("sort_order", { ascending: true })
+          .order("id", { ascending: true });
+        if (catsErr) throw catsErr;
+
+        const { data: items, error: itemsErr } = await supabase
+          .from("service_item")
+          .select("id,category_id,label,sort_order")
+          .order("category_id", { ascending: true })
+          .order("sort_order", { ascending: true })
+          .order("id", { ascending: true });
+        if (itemsErr) throw itemsErr;
+
+        const itemsByCategory = new Map();
+        (items || []).forEach((it) => {
+          const arr = itemsByCategory.get(it.category_id) ?? [];
+          // Your UI expects { en, ms } per item. Our table has 1 label, so we mirror it.
+          arr.push({ en: it.label, ms: it.label });
+          itemsByCategory.set(it.category_id, arr);
+        });
+
+        const merged = (cats || []).map((c) => ({
+          id: c.id,
+          title: { en: c.title_en, ms: c.title_ms },
+          icon: iconByKey[c.icon_key] ?? <FileText className="w-8 h-8" />,
+          // Keep your frontend-only fields (filters) with safe defaults
+          minAge: 0,
+          maxAge: 999,
+          maxIncome: 99999,
+          keywords: [],
+          items: itemsByCategory.get(c.id) ?? []
+        }));
+
+        if (!cancelled) setServices(merged);
+      } catch (e) {
+        if (cancelled) return;
+        setServicesError(String(e?.message || e));
+        setServices(SERVICES_DATA);
+      } finally {
+        if (!cancelled) setServicesLoading(false);
+      }
+    }
+
+    loadFromSupabase();
+
+    const channel = supabase
+      .channel("services-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "service_category" },
+        () => loadFromSupabase()
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "service_item" },
+        () => loadFromSupabase()
+      )
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+    };
+  }, [iconByKey]);
+
   // --- Handlers ---
   const triggerBugAnimation = () => {
     if (isReportingBug) return;
@@ -183,11 +285,18 @@ const App = () => {
   const handleLogout = () => {
     setIsLoggingOut(true);
     setShowProfileMenu(false);
-    setTimeout(() => {
-      setIsLoggedIn(false);
-      setVerifiedIC('');
-      setIsLoggingOut(false);
-    }, 1500);
+    (async () => {
+      try {
+        if (supabase) await supabase.auth.signOut();
+      } finally {
+        setIsLoggedIn(false);
+        setVerifiedIC('');
+        setIsIdentityVerified(false);
+        setAuthIdentity('');
+        setAuthPassword('');
+        setIsLoggingOut(false);
+      }
+    })();
   };
 
   const handleAgeChange = (e) => {
@@ -218,33 +327,72 @@ const App = () => {
 
   const handleVerifyIdentity = (e) => {
     e.preventDefault();
-    const digitsOnly = authIdentity.replace(/\D/g, '');
-    const isIC = /^[0-9-]*$/.test(authIdentity);
-    if (isIC && digitsOnly.length < 12) {
-      setAuthError(t[language].authErrors.shortIc);
+
+    // Supabase auth requires email for sign-in/sign-up.
+    // Keep this step as a light "format check" before revealing the password field.
+    const isEmail = authIdentity.includes("@");
+    if (!isEmail) {
+      setAuthError("Use Email to log in (Supabase Auth). IC-only login needs a custom backend.");
       return;
     }
+
     setIsVerifying(true);
     setTimeout(() => {
       setIsVerifying(false);
-      if (digitsOnly.length === 12 || authIdentity.includes('@')) {
-        setIsIdentityVerified(true);
-        setAuthError(null);
-      } else {
-        setAuthError(t[language].authErrors.notFound);
-      }
-    }, 1200);
+      setIsIdentityVerified(true);
+      setAuthError(null);
+    }, 500);
   };
 
   const handleLoginSubmit = (e) => {
     e.preventDefault();
-    setIsMatching(true);
-    setTimeout(() => {
-      setVerifiedIC(authIdentity);
-      setIsLoggedIn(true);
-      setIsMatching(false);
-      setShowAuthModal(false);
-    }, 1500);
+    (async () => {
+      if (!supabase) {
+        setAuthError("Supabase is not configured. Check your .env and restart Vite.");
+        return;
+      }
+      if (!authIdentity.includes("@")) {
+        setAuthError("Please enter an email address for Supabase login.");
+        return;
+      }
+      if (!authPassword || authPassword.length < 6) {
+        setAuthError("Password must be at least 6 characters.");
+        return;
+      }
+
+      try {
+        setAuthLoading(true);
+        setAuthError(null);
+
+        if (authType === "signup") {
+          const { data, error } = await supabase.auth.signUp({
+            email: authIdentity.trim(),
+            password: authPassword,
+          });
+          if (error) throw error;
+
+          // Some projects require email confirmation; session may be null.
+          const email = data?.user?.email || authIdentity.trim();
+          setVerifiedIC(email);
+          setIsLoggedIn(Boolean(data?.session));
+          setShowAuthModal(false);
+        } else {
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email: authIdentity.trim(),
+            password: authPassword,
+          });
+          if (error) throw error;
+
+          setVerifiedIC(data?.user?.email || authIdentity.trim());
+          setIsLoggedIn(true);
+          setShowAuthModal(false);
+        }
+      } catch (err) {
+        setAuthError(String(err?.message || err));
+      } finally {
+        setAuthLoading(false);
+      }
+    })();
   };
 
   const toggleCategory = (id) => setExpandedCategoryId(expandedCategoryId === id ? null : id);
@@ -259,6 +407,7 @@ const App = () => {
     setShowAuthModal(true);
     setShowProfileMenu(false);
     setAuthIdentity('');
+    setAuthPassword('');
     setIsIdentityVerified(false);
     setAuthError(null);
   };
@@ -267,13 +416,13 @@ const App = () => {
   const isEmailInput = useMemo(() => authIdentity.length > 0 && !/^[0-9-]*$/.test(authIdentity), [authIdentity]);
 
   const filteredServices = useMemo(() => {
-    let list = SERVICES_DATA;
+    let list = services;
     const q = searchQuery.toLowerCase().trim();
     if (q) {
       list = list.filter(cat => 
         cat.title.en.toLowerCase().includes(q) || 
         cat.title.ms.toLowerCase().includes(q) ||
-        cat.keywords.some(k => k.includes(q))
+        (cat.keywords || []).some(k => k.includes(q))
       );
     }
     if (!isLoggedIn) {
@@ -286,7 +435,7 @@ const App = () => {
       });
     }
     return list;
-  }, [searchQuery, minIncome, ageInput, isLoggedIn]);
+  }, [services, searchQuery, minIncome, ageInput, isLoggedIn]);
 
   const checkProfileMatch = (cat) => {
     if (!isLoggedIn) return false;
@@ -297,7 +446,7 @@ const App = () => {
     return matchesAge && matchesIncome;
   };
 
-  const recommendedServices = useMemo(() => SERVICES_DATA.slice(0, 3), []);
+  const recommendedServices = useMemo(() => services.slice(0, 3), [services]);
   const hasIntentMatch = useMemo(() => {
     const q = searchQuery.toLowerCase();
     return ['money', 'duit', 'sick', 'sakit', 'hospital'].some(word => q.includes(word));
@@ -323,6 +472,28 @@ const App = () => {
   useEffect(() => {
     document.documentElement.classList.toggle('dark', darkMode);
   }, [darkMode]);
+
+  useEffect(() => {
+    if (!supabase) return;
+
+    supabase.auth.getSession().then(({ data }) => {
+      const email = data?.session?.user?.email;
+      if (email) {
+        setIsLoggedIn(true);
+        setVerifiedIC(email);
+      }
+    });
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      const email = session?.user?.email || "";
+      setIsLoggedIn(Boolean(session));
+      setVerifiedIC(email);
+    });
+
+    return () => {
+      sub?.subscription?.unsubscribe?.();
+    };
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -397,6 +568,17 @@ const App = () => {
       </header>
 
       <main className="w-full md:max-w-[70%] mx-auto px-4 py-8 md:py-12 min-h-[65vh]">
+        {supabase && servicesLoading && (
+          <div className="mb-5 text-[10px] font-bold uppercase tracking-[0.2em] opacity-60 flex items-center gap-2">
+            <Loader2 className="w-4 h-4 animate-spin text-yellow-500" />
+            Syncing from Supabase...
+          </div>
+        )}
+        {supabase && servicesError && (
+          <div className="mb-6 p-4 rounded-2xl border border-red-500/20 bg-red-500/10 text-red-500 text-[10px] font-bold uppercase tracking-widest">
+            Supabase error: {servicesError}
+          </div>
+        )}
         <div className="relative group mb-8">
           <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-yellow-600 z-10" />
           <input type="text" placeholder={placeholderText} className={`w-full pl-14 pr-16 py-5 rounded-2xl border-2 outline-none font-semibold text-lg shadow-xl transition-all backdrop-blur-md ${darkMode ? 'bg-white/10 border-white/20 focus:border-yellow-600 text-white' : 'bg-white border-slate-200 focus:border-black text-slate-900'}`} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
@@ -507,11 +689,11 @@ const App = () => {
               {(isIdentityVerified || authType === 'signup') && (
                 <div className="space-y-1.5 animate-in slide-in-from-top-4 fade-in duration-500">
                   <label className="text-[10px] font-bold uppercase opacity-40 px-1 tracking-widest flex items-center gap-2"><Lock className="w-3 h-3" /> {t[language].authLabels.password}</label>
-                  <input required type={showPassword ? "text" : "password"} placeholder="••••••••" className={`w-full p-5 h-[64px] rounded-2xl border-2 font-bold outline-none transition-all ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200 text-slate-900'}`} />
+                  <input required value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} type={showPassword ? "text" : "password"} placeholder="••••••••" className={`w-full p-5 h-[64px] rounded-2xl border-2 font-bold outline-none transition-all ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200 text-slate-900'}`} />
                 </div>
               )}
-              <button type="submit" disabled={isVerifying || authIdentity.length < 5} className={`w-full py-5 mt-4 rounded-2xl font-bold uppercase tracking-[0.2em] shadow-xl transition-all flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50 ${isIdentityVerified || authType === 'signup' ? 'bg-yellow-500 text-black shadow-yellow-500/20' : 'bg-black text-white'}`}>
-                {isVerifying ? <Loader2 className="w-5 h-5 animate-spin" /> : (isIdentityVerified || authType === 'signup' ? (authType === 'login' ? 'LOG IN' : 'SIGN UP') : t[language].authLabels.verify)}
+              <button type="submit" disabled={isVerifying || authLoading || authIdentity.length < 5} className={`w-full py-5 mt-4 rounded-2xl font-bold uppercase tracking-[0.2em] shadow-xl transition-all flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50 ${isIdentityVerified || authType === 'signup' ? 'bg-yellow-500 text-black shadow-yellow-500/20' : 'bg-black text-white'}`}>
+                {(isVerifying || authLoading) ? <Loader2 className="w-5 h-5 animate-spin" /> : (isIdentityVerified || authType === 'signup' ? (authType === 'login' ? 'LOG IN' : 'SIGN UP') : t[language].authLabels.verify)}
               </button>
             </form>
             
