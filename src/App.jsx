@@ -392,7 +392,7 @@ const handleAuthSubmit = async (e) => {
       matchTitle: 'Filter',
       filters: { incomeMin: 'Min Income (RM)', incomeMax: 'Max Income (RM)', age: 'Age', placeholder: 'Enter Age' },
       heyReplies: ["Matching aid...", "Updating profile view...", "Welcome back! 🦅"],
-      profile: { guest: 'Guest User', user: 'ALEXANDER_AR98', signup: 'Sign Up' },
+      profile: { guest: 'Guest User', user: authName || 'User', signup: 'Sign Up' },
       searchSuggestions: ['Scholarships', 'Financial Aid', 'SCHB', 'Water Connection']
     },
     ms: {
@@ -419,7 +419,7 @@ const handleAuthSubmit = async (e) => {
       matchTitle: 'Penapis',
       filters: { incomeMin: 'Pendapatan Min (RM)', incomeMax: 'Pendapatan Max (RM)', age: 'Umur', placeholder: 'Masukkan Umur' },
       heyReplies: ["Memadankan bantuan...", "Kemaskini paparan...", "Selamat kembali! 🦅"],
-      profile: { guest: 'Pengguna Tamu', user: 'ALEXANDER_AR98', signup: 'Daftar' },
+      profile: { guest: 'Pengguna Tamu', user: authName || 'User', signup: 'Daftar' },
       searchSuggestions: ['Biasiswa', 'Bantuan Kewangan', 'SCHB', 'Sambungan Air']
     }
   }), [language]);
@@ -645,14 +645,14 @@ const handleAuthSubmit = async (e) => {
                           <h5 className="text-[10px] font-black uppercase opacity-30 tracking-[0.4em] mb-6 flex items-center gap-3"><Fingerprint className="w-3 h-3" /> Permanent Record</h5>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                              {[
-                               { label: 'Full Name', value: 'ALEXANDER ANAK ROBERT' },
-                               { label: 'MyKad (IC)', value: verifiedIC },
-                               { label: 'Account Status', value: 'ACTIVE • VERIFIED', color: 'text-green-500' },
-                               { label: 'Country', value: 'MALAYSIA (SARAWAK)' },
-                               { label: 'Date of Birth', value: authDob },
-                               { label: 'Gender', value: authGender },
-                               { label: 'Race', value: authRace || 'IBAN' },
-                               { label: 'Religion', value: authReligion || 'CHRISTIAN' }
+                                { label: 'Full Name', value: authName || 'NOT SET' },
+                                { label: 'MyKad (IC)', value: verifiedIC },
+                                { label: 'Account Status', value: 'ACTIVE • VERIFIED', color: 'text-green-500' },
+                                { label: 'Country', value: 'MALAYSIA (SARAWAK)' },
+                                { label: 'Date of Birth', value: authDob },
+                                { label: 'Gender', value: authGender },
+                                { label: 'Race', value: authRace || 'NOT SET' },
+                                { label: 'Religion', value: authReligion || 'NOT SET' }
                              ].map((field, i) => (
                                <div key={i} className={`p-6 rounded-3xl border ${darkMode ? 'bg-white/5 border-white/5' : 'bg-slate-50 border-slate-100'}`}><p className="text-[9px] font-bold uppercase opacity-30 mb-1">{field.label}</p><p className={`font-black text-sm ${field.color || ''}`}>{field.value}</p></div>
                              ))}
