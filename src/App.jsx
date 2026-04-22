@@ -13,6 +13,7 @@ import {
   Activity, UserRound, Mail as MailIcon, Briefcase as ProcurementIcon, ShieldAlert as AlertIcon,
   ShieldCheck as VerifiedIcon
 } from 'lucide-react';
+import { supabase } from './supabaseClient';
 
 // --- Sequential 1-16 Category Service Data ---
 const INITIAL_SERVICES = [
@@ -260,38 +261,101 @@ const App = () => {
     return regex.test(pw);
   };
 
-  const handleAuthSubmit = (e) => {
-    if (e) e.preventDefault();
-    
-    if (authType === 'signup') {
-      if (signUpStep === 1) {
-        setSignUpStep(2);
+const handleAuthSubmit = async (e) => {
+  if (e) e.preventDefault();
+  setAuthError(null);
+
+  // --- SIGNUP FLOW ---
+  if (authType === 'signup') {
+    if (signUpStep === 1) {
+      setSignUpStep(2);
+      return;
+    }
+    if (signUpStep === 2) {
+      if (!validatePassword(showPassword)) {
+        setAuthError("Password must be 8+ chars with uppercase, lowercase, number and symbol.");
         return;
       }
-      if (signUpStep === 2) {
-        if (!validatePassword(showPassword)) {
-          setAuthError("Password must be 8+ chars with uppercase, lowercase, number and symbol.");
-          return;
-        }
-        if (showPassword !== confirmPassword) {
-          setAuthError("Passwords do not match.");
-          return;
-        }
-        setSignUpStep(3);
-        setAuthError(null);
+      if (showPassword !== confirmPassword) {
+        setAuthError("Passwords do not match.");
         return;
+      }
+      setSignUpStep(3);
+      return;
+    }
+
+    // Step 3: Final Submission to Supabase
+    setIsMatching(true);
+    
+    // 1. Create the Auth Account
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: emailAddress,
+      password: showPassword,
+    });
+
+    if (authError) {
+      setAuthError(authError.message);
+      setIsMatching(false);
+      return;
+    }
+
+    // 2. Save Custom Profile Data to the 'profiles' table
+    if (authData.user) {
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert([{
+          id: authData.user.id,
+          full_name: authName,
+          ic_number: authIdentity,
+          dob: authDob,
+          gender: authGender,
+          race: authRace === 'Others' ? otherRace : authRace,
+          religion: authReligion === 'Others' ? otherReligion : authReligion,
+          mobile_phone: mobilePhone,
+          email_address: emailAddress,
+          permanent_address: permanentAddress,
+          correspondence_address: correspondenceAddress,
+          role: 'user' // Default role
+        }]);
+
+      if (profileError) {
+        setAuthError("Profile saved, but error updating details: " + profileError.message);
+      } else {
+        setVerifiedIC(authIdentity);
+        setIsLoggedIn(true);
+        setShowAuthModal(false);
       }
     }
-    
+    setIsMatching(false);
+  } 
+
+  // --- LOGIN FLOW ---
+  else {
     setIsMatching(true);
-    setTimeout(() => {
-      if (authIdentity.replace(/\D/g, '') === "000000000000") setIsAdmin(true);
-      setVerifiedIC(authIdentity);
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: emailAddress, // Note: You might want to add a password field to your login UI too
+      password: showPassword, 
+    });
+
+    if (error) {
+      setAuthError("Login failed: " + error.message);
+      setIsMatching(false);
+    } else {
+      // Logic for Admin check (e.g., check role from profiles table)
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role, ic_number')
+        .eq('id', data.user.id)
+        .single();
+
+      if (profile?.role === 'admin') setIsAdmin(true);
+      setVerifiedIC(profile?.ic_number || '');
       setIsLoggedIn(true);
       setIsMatching(false);
       setShowAuthModal(false);
-    }, 1500);
-  };
+    }
+  }
+};
 
   // --- Translations ---
   const t = useMemo(() => ({
@@ -705,11 +769,41 @@ const App = () => {
                           <button type="submit" className="w-full py-5 rounded-2xl bg-black text-white font-black uppercase tracking-widest shadow-xl">Set Security Credentials <ChevronRight className="inline w-5 h-5 ml-2" /></button>
                        </div>
                     </div>
-                  ) : (
-                    <div className="space-y-2"><label className="text-[10px] font-black uppercase opacity-40 px-1">{t[language].authLabels.identity}</label><input required type="text" value={authIdentity} onChange={handleIdentityChange} placeholder="980101-13-XXXX" className={`w-full p-5 font-black outline-none transition-all rounded-2xl border-2 ${isIdentityVerified ? 'border-green-500/50 bg-green-500/5' : (authError ? 'border-red-500/50 bg-red-500/5' : (darkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'))}`} /></div>
-                  )}
-                  {!isIdentityVerified && authType === 'login' && <button onClick={handleVerifyIdentity} className="w-full py-6 rounded-2xl bg-black text-white font-black uppercase shadow-xl">{t[language].authLabels.verify}</button>}
-                  {isIdentityVerified && authType === 'login' && <button type="submit" className="w-full py-6 rounded-2xl bg-yellow-500 text-black font-black uppercase tracking-[0.2em] shadow-xl transform active:scale-95 transition-all">Proceed Access</button>}
+<div className="space-y-6">
+              {/* Email Input */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase opacity-40 px-1">Email Address</label>
+                <input 
+                  required 
+                  type="email" 
+                  value={emailAddress} 
+                  onChange={(e) => setEmailAddress(e.target.value)} 
+                  placeholder="name@example.com" 
+                  className={`w-full p-5 font-black outline-none transition-all rounded-2xl border-2 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'}`} 
+                />
+              </div>
+
+              {/* Password Input */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase opacity-40 px-1">Password</label>
+                <input 
+                  required 
+                  type="password" 
+                  value={showPassword} 
+                  onChange={(e) => setShowPassword(e.target.value)} 
+                  placeholder="••••••••" 
+                  className={`w-full p-5 font-black outline-none transition-all rounded-2xl border-2 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'}`} 
+                />
+              </div>
+            </div>
+{authType === 'login' && (
+    <button 
+      type="submit" 
+      className="w-full py-6 rounded-2xl bg-yellow-500 text-black font-black uppercase tracking-[0.2em] shadow-xl transform active:scale-95 transition-all mt-6"
+    >
+      Proceed Access
+    </button>
+  )}
                 </form>
                 <div className="mt-8 text-center border-t border-slate-800/10 pt-8"><button onClick={() => setAuthType(authType === 'login' ? 'signup' : 'login')} className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 hover:opacity-100 hover:text-yellow-600 transition-all underline underline-offset-8">{t[language].authSwitch[authType]}</button></div>
               </>
