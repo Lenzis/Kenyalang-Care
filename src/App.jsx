@@ -464,6 +464,21 @@ const handleAuthSubmit = async (e) => {
 
   // --- Effects ---
   useEffect(() => {
+    // Check if user is already logged in when the page loads
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        setIsLoggedIn(true);
+      }
+    });
+
+    // Listen for logins/logouts
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+  useEffect(() => {
     const suggestions = t[language].searchSuggestions;
     let wordIdx = 0, dotIdx = 0;
     const dotSequence = ['', '.', '..', '...'];
@@ -474,6 +489,8 @@ const handleAuthSubmit = async (e) => {
     }, 600);
     return () => clearInterval(interval);
   }, [language, t]);
+
+  
 
   useEffect(() => { document.documentElement.classList.toggle('dark', darkMode); }, [darkMode]);
 
