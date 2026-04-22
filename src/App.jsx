@@ -342,18 +342,26 @@ const handleAuthSubmit = async (e) => {
       setIsMatching(false);
     } else {
       // Logic for Admin check (e.g., check role from profiles table)
+// Logic for Admin check and fetching user data
       const { data: profile } = await supabase
         .from('profiles')
-        .select('role, ic_number')
+        .select('*') // Get everything!
         .eq('id', data.user.id)
         .single();
 
-      if (profile?.role === 'admin') setIsAdmin(true);
-      setVerifiedIC(profile?.ic_number || '');
-      setIsLoggedIn(true);
-      setIsMatching(false);
-      setShowAuthModal(false);
-    }
+      if (profile) {
+        setAuthName(profile.full_name);
+        setAuthDob(profile.dob);
+        setAuthGender(profile.gender);
+        setAuthRace(profile.race);
+        setAuthReligion(profile.religion);
+        setPermanentAddress(profile.permanent_address);
+        setCorrespondenceAddress(profile.correspondence_address);
+        setMobilePhone(profile.mobile_phone);
+        
+        if (profile.role === 'admin') setIsAdmin(true);
+        setVerifiedIC(profile.ic_number || '');
+      }
   }
 };
 
