@@ -1,261 +1,330 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
-  Search, Moon, Sun, Globe, ClipboardCheck,
+  Search, Moon, Sun, ClipboardCheck,
   ChevronRight, ChevronDown, BookOpen, 
   GraduationCap, Briefcase, Calculator, Building2, 
-  Map, Droplets, Landmark, FileText, Heart, UtilityPole,
-  Sparkles, Eye, Lock, X, MessageCircle, AlertTriangle, Bug,
-  User, Settings, LogOut, Check, Wallet, CalendarDays, Stethoscope, Users,
-  Filter, Sparkle, ShieldCheck, Info, LogIn, UserPlus, Clock, Send, FileSearch,
-  SlidersHorizontal, Mail, Fingerprint, EyeOff, Lightbulb, UserCheck, MapPin, 
-  Phone, Edit3, ShieldAlert, ShieldQuestion, Loader2, Landmark as Bank, Sprout, 
-  Gavel, Waves, Zap, FileUp, Droplet, Plus, Trash2, Save, History, AtSign, Smartphone,
-  Activity, UserRound, Mail as MailIcon, Briefcase as ProcurementIcon, ShieldAlert as AlertIcon,
-  ShieldCheck as VerifiedIcon
+  Map, Droplets, Landmark, FileText, Heart, Users, 
+  UtilityPole, Sparkles, Eye, Lock, X, MessageCircle, 
+  AlertTriangle, Bug, User, Settings, LogOut, Check, 
+  Wallet, CalendarDays, Stethoscope, Filter, Sparkle, 
+  ShieldCheck, Info, LogIn, UserPlus, Clock, Send, 
+  FileSearch, SlidersHorizontal, Mail, Fingerprint, 
+  EyeOff, Lightbulb, UserCheck, MapPin, Phone, Edit3, 
+  ShieldAlert, ShieldQuestion, Loader2, Landmark as Bank, 
+  Sprout, Gavel, Waves, Zap, FileUp, Droplet, Plus, 
+  Trash2, Save, History, AtSign, Smartphone, Activity, 
+  UserRound, Menu, Camera, Maximize, ZoomIn, UserCog, 
+  RefreshCw, Palette, LayoutGrid, Globe, Link as LinkIcon,
+  GraduationCap as SchoolIcon, ChevronUp, Minimize2, Image,
+  MessageSquare
 } from 'lucide-react';
 import { supabase } from './supabaseClient';
 
-// --- Sequential 1-16 Category Service Data ---
+// --- Global UI Strings ---
+const UI_TEXT = {
+  title: 'Kenyalang Care', 
+  adminPanel: 'Management Hub',
+  aboutUs: 'About us', 
+  privacy: 'Privacy policy', 
+  noResults: 'No records found matching your search.', 
+  authTitleLogin: 'User Access', 
+  authTitleAdmin: 'Admin Unlock',
+  authTitleSignup: 'Create Profile', 
+  authSubtitleSignup: 'Official Sarawak Digital Identity',
+  authErrorNotFound: "Identity not recognized.",
+  authErrorWrongCreds: "Verification failed. Check credentials.",
+  signUpWarning: "Once created, core details like your Name and MyKad (IC) are locked for security purposes.",
+  about: "Kenyalang Care is the official digital services gateway for the citizens of Sarawak. Managed by the Digital Sarawak Unit, we aim to bridge the gap between government assistance and the community through high-efficiency identity verification and service accessibility.",
+  privacyUrl: "https://www.termsfeed.com/live/d6005081-c8db-4c74-a101-75a592693761"
+};
+
+// --- Global Icon Mapping ---
+const IconMap = { 
+  GraduationCap, BookOpen, Bank, Sparkles, ClipboardCheck, 
+  Briefcase, Building2, Sprout, FileText, Heart, Users, 
+  UtilityPole, UserCog, RefreshCw, Palette, LayoutGrid,
+  Calculator, FileUp, Droplets, Landmark, Globe, CalendarDays, FileSearch,
+  Zap, Gavel, Waves, Smartphone, Activity, SchoolIcon, Bug
+};
+
+// --- Mock Records Database ---
+const INITIAL_CITIZENS = [
+  {
+    id: "KC-980404135567",
+    name: "Alexander Anak Robert",
+    ic: "980404-13-5567",
+    password: "User123!", 
+    race: "Iban", religion: "Christianity", mobile: "123456789",
+    applications: [{ id: "APP-001", name: "Kenyalang Gold Card", status: "Approved", date: "26 Apr 2026" }]
+  }
+];
+
+const INITIAL_ADMINS = [
+  { id: "#KC130001", name: "System Administrator", email: "admin@sarawak.gov.my" }
+];
+
+const INITIAL_BUGS = [
+  { id: 1, desc: "Status not updating on mobile view.", screenshot: null, user: "KC-980404135567", time: "26 Apr 2026" }
+];
+
+// --- Exhaustive Service Catalog ---
 const INITIAL_SERVICES = [
-  { id: 1, title: { en: "1. Aids / Bantuan For Student", ms: "1. Bantuan Pelajar" }, icon: "GraduationCap", minAge: 5, maxAge: 25, maxIncome: 4850, keywords: ['student', 'school', 'laptop', 'book'], items: [
-    { en: "Special Financial Assistance", ms: "Bantuan Kewangan Khas", desc: "One-off financial support to help students with school preparation costs." },
-    { en: "Laptop Assistance", ms: "Laptop", desc: "Provision of digital devices for students to support modern e-learning needs." },
-    { en: "Book Assistance", ms: "Bantuan Buku", desc: "Subsidy vouchers for the purchase of essential textbooks and school materials." },
-    { en: "Free School Transport", ms: "Pengangkutan Sekolah Percuma", desc: "Subsidized transportation services for students in rural and urban areas." },
-    { en: "School Scholarship", ms: "Biasiswa Sekolah", desc: "Academic excellence awards for high-performing primary and secondary school students." },
-    { en: "Tuition Assistance", ms: "Bantuan Tuisyen", desc: "Financial support to cover monthly coaching and academic tuition fees." },
-    { en: "Uniform Program", ms: "Program Pakaian Seragam", desc: "Vouchers to provide school uniforms, bags, and shoes for eligible families." }
+  // --- SCHOOL AND STUDENTS ---
+  { id: 1, group: "student", title: { en: "1. Aids / Bantuan for student" }, icon: "SchoolIcon", items: [
+    { en: "Special Financial Assistance for Sarawak Student", desc: "Aids / Bantuan for student", link: "https://myys.yayasansarawak.org.my/student_self_registration/step_1_form.php" },
+    { en: "Laptop", desc: "Digital aid for students", link: "https://myys.yayasansarawak.org.my/student_self_registration/step_1_form.php" },
+    { en: "Book", desc: "Material assistance", link: "https://myys.yayasansarawak.org.my/student_self_registration/step_1_form.php" },
+    { en: "Free school transport", desc: "Please Apply Via School Authorities", link: "#" },
+    { en: "School scholarship", desc: "Please Apply Via School Authorities", link: "#" },
+    { en: "Tuition", desc: "Please Apply Via School Authorities", link: "#" },
+    { en: "Uniform", desc: "Please Apply Via School Authorities", link: "#" }
   ]},
-  { id: 2, title: { en: "2. Scholarships", ms: "2. Biasiswa" }, icon: "BookOpen", minAge: 17, maxAge: 35, maxIncome: 10000, keywords: ['degree', 'unimas', 'ipt', 'yayasan'], items: [
-    { en: "Biasiswa Yayasan Sarawak Tun Taib", ms: "Biasiswa Yayasan Sarawak Tun Taib", desc: "Prestigious state scholarship for degree level studies in local institutions." },
-    { en: "YBSTAR Scholarship", ms: "Biasiswa YBSTAR", desc: "Financial support specifically for technical and vocational excellence tracks." },
-    { en: "Special UNIMAS Medical Scholarship", ms: "Biasiswa Khas Program Perubatan UNIMAS", desc: "Full funding for Sarawakians pursuing medical degrees at UNIMAS." },
-    { en: "Yayasan Sarawak Local Scholarship", ms: "Biasiswa Tempatan Yayasan Sarawak", desc: "Funding for various diploma and undergraduate courses within Sarawak." },
-    { en: "IPT Entry Assistance", ms: "Bantuan Kemasukan Ke IPT", desc: "Cash assistance to help students with initial university registration." },
-    { en: "Bursary BP40", ms: "Bursari BP40", desc: "Special education fund targeting the B40 group for higher learning access." },
-    { en: "i-GPS Graduate Return Initiative", ms: "Inisiatif Graduan Pulang Sarawak (i-GPS)", desc: "Travel airfare subsidy for Sarawakian students studying in other states." }
+  { id: 2, group: "student", title: { en: "2. Biasiswa" }, icon: "BookOpen", items: [
+    { en: "Biasiswa yayasan sarawak tun taib", desc: "Higher learning scholarship", link: "http://175.138.68.197:5300/Account/UserLogin.aspx?AspxAutoDetectCookieSupport=1" },
+    { en: "Yayasan biasiswa Sarawak tunku Abdul rahman (YBSTAR)", desc: "State scholarship", link: "http://175.138.68.197:5300/Account/UserLogin.aspx" },
+    { en: "Biasiswa khas program perubatan unias", desc: "Medical sponsorship", link: "#" },
+    { en: "Biasiswa tempatan yayasan sarawak", desc: "Local sponsorship", link: "#" },
+    { en: "Bantuan kemasukan ke IPT", desc: "Entrance aid", link: "http://175.138.68.197:51/iwps/Account/UserLogin.aspx" },
+    { en: "Bursari BP40", desc: "Financial assistance", link: "#" },
+    { en: "Inisiatif Graduan Pulang Sarawak (i - GPS)", desc: "Graduate subsidy", link: "http://175.138.68.197:51/iwps/Account/UserLogin.aspx" }
   ]},
-  { id: 3, title: { en: "3. Pinjaman (Loans)", ms: "3. Pinjaman" }, icon: "Bank", minAge: 18, maxAge: 50, maxIncome: 99999, keywords: ['loan', 'pinjam', 'money'], items: [
-    { en: "Domestic Study Loan", ms: "Biasiswa Pinjaman Pelajaran Dalam Negara", desc: "Low-interest loans for students pursuing higher education within Malaysia." },
-    { en: "Overseas Study Loan", ms: "Pinjaman Pelajaran Luar Negara", desc: "Financial support for selected students pursuing specialized courses internationally." },
-    { en: "Technical Training Loan", ms: "Biasiswa Pinjaman Latihan Teknikal", desc: "Funding for vocational and skill-based training programs across Sarawak." }
+  { id: 3, group: "student", title: { en: "3. Pinjaman" }, icon: "Calculator", items: [
+    { en: "Biasiswa pinjaman pelajaran dalam negara", desc: "Domestic loans", link: "http://175.138.68.197:51/iwps/Account/UserLogin.aspx" },
+    { en: "Pinjaman pelajaran luar negara", desc: "International loans", link: "http://175.138.68.197:51/iwps/Account/UserLogin.aspx" },
+    { en: "Biasiswa pinjaman latihan teknikal", desc: "Technical loans", link: "http://175.138.68.197:51/iwps/Account/UserLogin.aspx" }
   ]},
-  { id: 4, title: { en: "4. Program Dan Bantuan", ms: "4. Program Dan Bantuan" }, icon: "Sparkles", minAge: 7, maxAge: 100, maxIncome: 99999, keywords: ['community', 'english', 'award'], items: [
-    { en: "Education Exchange Scholarship", ms: "Biasiswa Program Pertukaran Pelajaran", desc: "Opportunities for students to participate in international cultural and academic exchanges." },
-    { en: "Community Education Program", ms: "Program Pendidikan Komuniti", desc: "Skill-building and lifelong learning initiatives for local village communities." },
-    { en: "Premier Sarawak Special Award (AKPS)", ms: "Anugerah Khas Premier Sarawak (AKPS)", desc: "State recognition for individuals with outstanding achievements." }
+  { id: 4, group: "student", title: { en: "4. Program dan bantuan" }, icon: "Users", items: [
+    { en: "Biasiswa program pertukaran pelajaran", desc: "Exchange funding", link: "https://yayasansarawak.org.my/wp-content/uploads/2022/10/Borang-Permohonan-Pertukaran-Pelajaran-2022.pdf" },
+    { en: "Program pendidikan komuniti", desc: "Community learning", link: "#" },
+    { en: "Program bantuan pakaian seragam sekolah", desc: "Uniform aid", link: "#" },
+    { en: "Program HiPERS", desc: "High performance school program", link: "#" },
+    { en: "Perkhidmatan pengangkutan percuma pelajar sekolah", desc: "Free student transport", link: "#" },
+    { en: "Program tuisyen sekolah menengah", desc: "Tuition aid", link: "#" },
+    { en: "Anugerah khas premier sarawak (AKPS)", desc: "Premier awards", link: "#" },
+    { en: "Program pemerkasaan Bahasa inggeris (EPP)", desc: "English proficiency", link: "#" },
+    { en: "Anugerah Graduan Cemerlang", desc: "Graduate awards", link: "#" },
+    { en: "YS-JPNS Collaborations Programs", desc: "Joint education programs", link: "#" }
   ]},
-  { id: 5, title: { en: "5. Loan Repayments", ms: "5. Bayaran Balik Pinjaman" }, icon: "ClipboardCheck", minAge: 22, maxAge: 75, maxIncome: 99999, keywords: ['pay', 'repay', 'debt'], items: [
-    { en: "Repayment Methods", ms: "Kaedah Bayaran", desc: "Information on official channels available for repaying state education loans." },
-    { en: "Incentive Programs", ms: "Insentif", desc: "Discounts and incentives provided for consistent or early loan settlement." }
+  { id: 5, group: "student", title: { en: "6. Bayaran balık pijaman" }, icon: "RefreshCw", items: [
+    { en: "Kaedah", desc: "Methods of repayment", link: "#" },
+    { en: "Insentif", desc: "Early repayment incentives", link: "#" }
   ]},
-  { id: 6, title: { en: "6. Performance Reports", ms: "6. Hantar Keputusan Semester" }, icon: "FileUp", minAge: 18, maxAge: 50, maxIncome: 99999, keywords: ['result', 'laporan', 'semester'], items: [
-    { en: "Academic Result Form", ms: "Form", desc: "Official portal for scholars to submit their latest semester results." }
+  { id: 6, group: "student", title: { en: "7. Performance Reporting" }, icon: "FileUp", items: [
+    { en: "Hantar Keputusan Semester / Laporan Prestasi Pengajian", desc: "Online results form", link: "https://docs.google.com/forms/d/e/1FAIpQLSfhg1nbHOw4N_i8T212qY3QjZNM6nB1EdH4vsHszc9PNV8MDw/viewform" }
   ]},
-  { id: 7, title: { en: "7. Business Trade", ms: "7. Perdagangan Bisnes" }, icon: "Briefcase", minAge: 18, maxAge: 70, maxIncome: 99999, keywords: ['business', 'telecom'], items: [
-    { en: "Telecom Operate Permit", ms: "Permit Operasi Telekomunikasi", desc: "Licensing for companies providing telecommunication infrastructure services." },
-    { en: "Panel Hotel Application", ms: "Permohonan Panel Hotel", desc: "Registration for hotels to provide accommodation for government events." },
-    { en: "Sarawak Micro Credit Scheme (SMCS)", ms: "Skim Kredit Mikro Sarawak (SMCS)", desc: "Low-interest financial assistance for small business owners." }
+
+  // --- SERVICE SARAWAK ---
+  { id: 7, group: "service", title: { en: "1. Council Service" }, icon: "Building2", items: [
+    { en: "Apply for e-Billing of Assessment Rates Bills", desc: "Digital billing", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/288/" },
+    { en: "Form G(1)-Certificate of Clearance", desc: "Debt clearance", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/270/" },
+    { en: "Update Owner / Rate Payer Information", desc: "Record updates", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/272/" },
+    { en: "Apply for Rebate of Assessment Rates", desc: "Rate rebates", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/274/" },
+    { en: "Transfer of Ownership of Rateable Holdings", desc: "Ownership transfer", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/271/" },
+    { en: "Apply for Payment by Installment", desc: "Assessment installments", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/275/" },
+    { en: "House Numbering and Referencing", desc: "New holding info", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/276/" },
+    { en: "withdrawal of caveat with Local Councils", desc: "Caveat removal", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/273/" },
+    { en: "Apply for Remission of Rates", desc: "Rate remission", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/287/" }
   ]},
-  { id: 8, title: { en: "8. Procurement & Tenders", ms: "8. Perolehan & Tender" }, icon: "ProcurementIcon", minAge: 18, maxAge: 80, maxIncome: 99999, keywords: ['tender', 'vendor', 'contractor'], items: [
-    { en: "eProcurement Management", ms: "Pendaftaran Pembekal eProcurement", desc: "Integrated digital platform for all government supply chain activities." },
-    { en: "State e-Procurement notices", ms: "Notis Sebutharga Dan Tender", desc: "Gateway for viewing active government procurement opportunities." }
-  ]},
-  { id: 9, title: { en: "9. Council Service", ms: "9. Perkhidmatan Majlis" }, icon: "Building2", minAge: 18, maxAge: 120, maxIncome: 99999, keywords: ['council', 'rates', 'bill'], items: [
-    { en: "Indebtedness Clearance G(1)", ms: "Sijil Pelepasan Hutang G(1)", desc: "Official certificate confirming all council rates have been fully paid." },
-    { en: "Assessment e-Billing", ms: "e-Billing Cukai Pintu", desc: "Switch to digital billing for annual council assessment rates." },
-    { en: "Assessment Installment Plan", ms: "Bayaran Cukai Pintu Secara Ansuran", desc: "Structuring assessment rate payments into monthly installments." }
-  ]},
-  { id: 10, title: { en: "10. Education & Learning", ms: "10. Pendidikan & Pembelajaran" }, icon: "BookOpen", minAge: 7, maxAge: 60, maxIncome: 99999, keywords: ['school', 'scholarship'], items: [
-    { en: "Apply For State Scholarships", ms: "Biasiswa Pinjaman Kerajaan Negeri Sarawak", desc: "Gateway for state-funded higher education financial support." },
-    { en: "SPEAK Registration", ms: "Pendaftaran SPEAK", desc: "Career tracking system for students leaving the school system." }
-  ]},
-  { id: 11, title: { en: "11. Hydrology", ms: "11. Hidrologi" }, icon: "Droplet", minAge: 18, maxAge: 100, maxIncome: 99999, keywords: ['water', 'data'], items: [
-    { en: "Year Book Purchase", ms: "Buku Hidrologi", desc: "Direct access to state water and weather records for personal reference." },
-    { en: "Data Request", ms: "Mohon Data", desc: "Inter-departmental and private data sharing for planning." }
-  ]},
-  { id: 12, title: { en: "12. Land & Agriculture", ms: "12. Tanah & Pertanian" }, icon: "Sprout", minAge: 18, maxAge: 100, maxIncome: 99999, keywords: ['land', 'farm', 'crop'], items: [
-    { en: "Rice And Maize Program", ms: "Program Pembangunan Padi Dan Jagung", desc: "State support for staple crop development and modernization." },
-    { en: "Inland Fisheries Aid", ms: "Bantuan Pembangunan Perikanan Darat", desc: "Grants and technical support for aquaculture projects." }
-  ]},
-  { id: 13, title: { en: "13. Licence & Permit", ms: "13. Lesen & Permit" }, icon: "FileText", minAge: 18, maxAge: 100, maxIncome: 99999, keywords: ['license', 'permit'], items: [
-    { en: "Carbon Storage Management", ms: "Pengurusan Tapak Simpanan Karbon", desc: "Licensing for the operation of carbon capture and sequestration facilities." },
-    { en: "Endorsement Of Wireman", ms: "Pengesahan Wireman", desc: "Professional credentialing for authorized electrical technicians." }
-  ]},
-  { id: 14, title: { en: "14. Life Event", ms: "14. Acara Kehidupan" }, icon: "Heart", minAge: 18, maxAge: 120, maxIncome: 99999, keywords: ['marriage', 'job', 'nikah'], items: [
-    { en: "Senior Citizen Health Benefit", ms: "Manfaat Kesihatan Warga Emas (SCHB)", desc: "Cashless healthcare access for seniors at panel clinics." },
-    { en: "Adat Marriage Registration", ms: "Pendaftaran Perkahwinan Adat", desc: "Recording traditional native marriage arrangements for records." }
-  ]},
-  { id: 15, title: { en: "15. Social & Community", ms: "15. Sosial & Komuniti" }, icon: "Users", minAge: 0, maxAge: 120, maxIncome: 4850, keywords: ['aid', 'community', 'bib'], items: [
-    { en: "Bantuan Ibu Bersalin (BIB)", ms: "Bantuan Ibu Bersalin (BIB)", desc: "Financial grant for Sarawakian mothers assisting with post-natal costs." },
-    { en: "Bantuan Ihsan Kematian (BIK)", ms: "Bantuan Ihsan Kematian (BIK)", desc: "Compassionate grant provided to families for funeral arrangements." }
-  ]},
-  { id: 16, title: { en: "16. Utilities", ms: "16. Utiliti" }, icon: "UtilityPole", minAge: 18, maxAge: 120, maxIncome: 99999, keywords: ['water', 'electric', 'gas'], items: [
-    { en: "New Water Supply Connection", ms: "Sambungan Air Baru", desc: "Installing fresh water meters and connection lines for homes." },
-    { en: "Rural Electrification (BELB)", ms: "Bekalan Elektrik Luar Bandar (BELB)", desc: "Connecting remote longhouses to the state grid." }
+  { id: 8, group: "service", title: { en: "2. Utilities" }, icon: "Droplets", items: [
+    { en: "Online Request of Hydrological Data (Org)", desc: "Data enquiry", link: "#" },
+    { en: "Change of Water Supply Account Ownership", desc: "Account holder update", link: "#" },
+    { en: "Renew Pipe Fitter licence", desc: "License renewal", link: "#" },
+    { en: "Apply for Delay Payment", desc: "Bill extension", link: "#" },
+    { en: "Water Meter Replacement due to Lost", desc: "Request for lost meter", link: "#" },
+    { en: "Application For New Water Supply", desc: "New connection", link: "#" }
   ]}
 ];
 
 const App = () => {
-  // --- State ---
+  // --- UI State ---
   const [darkMode, setDarkMode] = useState(false);
-  const [language, setLanguage] = useState('en'); 
   const [searchQuery, setSearchQuery] = useState('');
+  const [placeholderText, setPlaceholderText] = useState('Search services...');
+  const [citizens, setCitizens] = useState(INITIAL_CITIZENS);
   const [services, setServices] = useState(INITIAL_SERVICES);
+  const [bugReports, setBugReports] = useState(INITIAL_BUGS);
   const [expandedCategoryId, setExpandedCategoryId] = useState(null);
-  const [placeholderText, setPlaceholderText] = useState('');
-  const [showApplicationForm, setShowApplicationForm] = useState(false);
-  const [selectedService, setSelectedService] = useState(null);
-  const [showAboutUs, setShowAboutUs] = useState(false);
-  const [heyMessage, setHeyMessage] = useState(null);
-  const [isPulsing, setIsPulsing] = useState(false);
-  const [isReportingBug, setIsReportingBug] = useState(false);
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(false); 
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isMatching, setIsMatching] = useState(false);
-  const [showStatusBoard, setShowStatusBoard] = useState(false);
-  const [showAdjustableFilters, setShowAdjustableFilters] = useState(false);
-  const [showProfileManagement, setShowProfileManagement] = useState(false);
-  const [profileTab, setProfileTab] = useState('overview');
-  const [showAdminPanel, setShowAdminPanel] = useState(false);
-  const [signUpStep, setSignUpStep] = useState(1); 
+  const [sidebarAuthMode, setSidebarAuthMode] = useState('menu'); 
+  const [showAboutUs, setShowAboutUs] = useState(false);
+  const [portalLogo, setPortalLogo] = useState('KC');
   
-  // Auth & Profile States
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authType, setAuthType] = useState('login'); 
-  const [showPassword, setShowPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [authIdentity, setAuthIdentity] = useState('');
-  const [authName, setAuthName] = useState(''); 
-  const [authDob, setAuthDob] = useState('');
-  const [authGender, setAuthGender] = useState('');
-  const [authRace, setAuthRace] = useState('');
-  const [authReligion, setAuthReligion] = useState('');
-  const [otherRace, setOtherRace] = useState('');
-  const [otherReligion, setOtherReligion] = useState('');
+  // --- Admin UI State ---
+  const [isCitizenHubMinimized, setIsCitizenHubMinimized] = useState(false);
+  const [isCatalogHubMinimized, setIsCatalogHubMinimized] = useState(false);
+  const [isBugHubMinimized, setIsBugHubMinimized] = useState(false);
   
-  const [isIdentityVerified, setIsIdentityVerified] = useState(false);
-  const [isVerifying, setIsVerifying] = useState(false);
+  // --- Auth & Session State ---
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [verifiedIC, setVerifiedIC] = useState('');
-  const [authError, setAuthError] = useState(null);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-
-  // Profile Details
+  const [showAuthModal, setShowAuthModal] = useState(false); 
+  const [signUpStep, setSignUpStep] = useState(1);
+  const [authType, setAuthType] = useState('login'); 
+  
+  const [authIdentity, setAuthIdentity] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authEmail, setAuthEmail] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [authName, setAuthName] = useState(''); 
+  const [authRace, setAuthRace] = useState('');
+  const [authReligion, setAuthReligion] = useState('');
   const [mobilePhone, setMobilePhone] = useState('');
-  const [permanentAddress, setPermanentAddress] = useState('');
-  const [correspondenceAddress, setCorrespondenceAddress] = useState('');
   const [emailAddress, setEmailAddress] = useState('');
+  const [permanentAddress, setPermanentAddress] = useState('');
+  
+  const [bugDesc, setBugDesc] = useState('');
+  const [bugScreen, setBugScreen] = useState(null);
+  const [profileImage, setProfileImage] = useState(null);
+  const [tempImage, setTempImage] = useState(null);
+  const [imageScale, setImageScale] = useState(1);
+  const [isConfirmingPhoto, setIsConfirmingPhoto] = useState(false);
+  
+  const [isIdentityVerified, setIsIdentityVerified] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [authError, setAuthError] = useState(null);
 
-  // Filter States
-  const [minIncome, setMinIncome] = useState(''); 
-  const [maxIncome, setMaxIncome] = useState(''); 
-  const [ageInput, setAgeInput] = useState(''); 
+  const sidebarRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const bugInputRef = useRef(null);
 
-  const menuRef = useRef(null);
-  const privacyUrl = "https://www.termsfeed.com/live/adceebaa-54af-463f-8fbb-e6bafd896862";
-
-  const IconMap = { GraduationCap, BookOpen, Bank, Sparkles, ClipboardCheck, Briefcase, Building2, Sprout, FileText, Heart, Users, UtilityPole, Droplet, FileUp, ProcurementIcon };
-
-  // --- HANDLERS ---
-  const handleViewModeClick = () => {
-    const replies = t[language].heyReplies;
-    setHeyMessage(replies[Math.floor(Math.random() * replies.length)]);
-    setIsPulsing(true);
-    setTimeout(() => { setHeyMessage(null); setIsPulsing(false); }, 2500);
+  // --- Handlers ---
+  const handleMobileChange = (e) => {
+    const d = e.target.value.replace(/\D/g, '');
+    if (d.length <= 10) setMobilePhone(d);
   };
 
   const triggerBugAnimation = () => {
-    if (isReportingBug) return;
-    setIsReportingBug(true);
-    setTimeout(() => setIsReportingBug(false), 2500);
+    setSidebarAuthMode('report-bug');
+    setShowSidebar(true);
   };
 
-  const openAuth = (type) => {
-    setAuthType(type);
-    setSignUpStep(1);
-    setShowAuthModal(true);
-    setShowProfileMenu(false);
-    setAuthIdentity('');
-    setAuthName('');
-    setAuthDob('');
-    setAuthGender('');
-    setAuthRace('');
-    setAuthReligion('');
-    setOtherRace('');
-    setOtherReligion('');
-    setShowPassword('');
-    setConfirmPassword('');
-    setIsIdentityVerified(false);
-    setAuthError(null);
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => { setTempImage(reader.result); setImageScale(1); setIsConfirmingPhoto(true); };
+      reader.readAsDataURL(file);
+    }
   };
 
-  const handleLogout = () => {
-    setIsLoggingOut(true);
-    setShowProfileMenu(false);
-    setTimeout(() => {
-      setIsLoggedIn(false);
-      setIsAdmin(false);
-      setVerifiedIC('');
-      setIsLoggingOut(false);
-      setShowProfileManagement(false);
-    }, 1500);
+  const handleBugScreenshot = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => { setBugScreen(reader.result); };
+      reader.readAsDataURL(file);
+    }
   };
 
-  const handleAgeChange = (e) => {
-    const val = e.target.value.replace(/[^0-9]/g, '');
-    if (val.length <= 3) setAgeInput(val);
+  const submitBug = () => {
+    if (!bugDesc) return;
+    const newBug = {
+      id: Date.now(), desc: bugDesc, screenshot: bugScreen, 
+      user: verifiedIC || "Guest", time: new Date().toLocaleDateString()
+    };
+    setBugReports([newBug, ...bugReports]);
+    setBugDesc(''); setBugScreen(null);
+    changeAuthMode('menu');
+  };
+
+  const changeAuthMode = (mode) => {
+    setAuthIdentity(''); setAuthPassword(''); setAuthEmail(''); setAuthError(null);
+    setIsIdentityVerified(false); setIsVerifying(false); setSidebarAuthMode(mode);
   };
 
   const handleIdentityChange = (e) => {
     let val = e.target.value;
     if (authError) setAuthError(null);
     if (isIdentityVerified) setIsIdentityVerified(false);
-
+    if (val.startsWith('#') || sidebarAuthMode === 'admin-login') {
+      if (val.length > 10) return; setAuthIdentity(val.toUpperCase()); return;
+    }
     if (/^[0-9-]*$/.test(val)) {
       const digits = val.replace(/\D/g, '');
-      
-      if (authType === 'signup' && digits.length >= 6) {
-        const year = digits.substring(0, 2);
-        const month = digits.substring(2, 4);
-        const day = digits.substring(4, 6);
-        const currentYear = new Date().getFullYear() % 100;
-        const century = parseInt(year) > currentYear ? "19" : "20";
-        setAuthDob(`${day}/${month}/${century}${year}`);
-      }
-      
-      if (authType === 'signup' && digits.length === 12) {
-        const lastDigit = parseInt(digits.slice(-1));
-        setAuthGender(lastDigit % 2 === 0 ? "Female" : "Male");
-      }
-
       let formatted = digits.substring(0, 12);
-      if (formatted.length > 6) formatted = `${formatted.substring(0, 6)}-${formatted.substring(6, 8)}${formatted.length > 8 ? '-' : ''}${formatted.substring(8, 12)}`;
+      if (formatted.length > 6) {
+        let temp = formatted.substring(0, 6) + '-' + formatted.substring(6, 8);
+        if (formatted.length > 8) temp += '-' + formatted.substring(8, 12);
+        formatted = temp;
+      }
       setAuthIdentity(formatted);
-    } else {
-      setAuthIdentity(val);
     }
   };
 
   const handleVerifyIdentity = (e) => {
-    e.preventDefault();
-    const digitsOnly = authIdentity.replace(/\D/g, '');
-    if (digitsOnly.length < 12 && !authIdentity.includes('@')) {
-      setAuthError(t[language].authErrors.shortIc);
-      return;
-    }
-    setIsVerifying(true);
+    if (e) e.preventDefault();
+    setIsVerifying(true); setAuthError(null);
     setTimeout(() => {
       setIsVerifying(false);
-      if (digitsOnly === "000000000000" || digitsOnly.length === 12 || authIdentity.includes('@')) {
-        setIsIdentityVerified(true);
-        setAuthError(null);
+      if (sidebarAuthMode === 'admin-login') {
+        if (!INITIAL_ADMINS.find(a => a.id === authIdentity)) { setAuthError(UI_TEXT.authErrorNotFound); return; }
       } else {
-        setAuthError(t[language].authErrors.notFound);
+        if (!citizens.find(c => c.ic === authIdentity)) { setAuthError(UI_TEXT.authErrorNotFound); return; }
+      }
+      setIsIdentityVerified(true);
+    }, 1000);
+  };
+
+  const handleLoginSubmit = (e) => {
+    if (e) e.preventDefault();
+    setIsMatching(true);
+    setTimeout(() => {
+      setIsMatching(false);
+      if (sidebarAuthMode === 'admin-login') {
+        const admin = INITIAL_ADMINS.find(a => a.id === authIdentity && a.email.toLowerCase() === authEmail.toLowerCase());
+        if (admin) {
+          setIsAdmin(true); setAuthName(admin.name); setVerifiedIC(admin.id);
+          setIsLoggedIn(true); setShowSidebar(false); setSidebarAuthMode('menu');
+        } else { setAuthError(UI_TEXT.authErrorWrongCreds); }
+      } else {
+        const user = citizens.find(c => c.ic === authIdentity && c.password === authPassword);
+        if (user) {
+          setIsAdmin(false); setAuthName(user.name); setVerifiedIC(user.ic);
+          setIsLoggedIn(true); setShowSidebar(false); setSidebarAuthMode('menu');
+        } else { setAuthError(UI_TEXT.authErrorWrongCreds); }
       }
     }, 1200);
   };
 
+<<<<<<< HEAD
+  const handleAuthSubmit = (e) => {
+    if (e) e.preventDefault();
+    if (signUpStep === 1) {
+      if (mobilePhone.length < 8) { setAuthError("Invalid mobile."); return; }
+      setSignUpStep(2); return;
+    }
+    if (signUpStep === 2) {
+      const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+      if (!regex.test(authPassword)) { setAuthError("Weak criteria."); return; }
+      if (authPassword !== confirmPassword) { setAuthError("Mismatch."); return; }
+      setSignUpStep(3); return;
+    }
+    setIsMatching(true);
+    setTimeout(() => {
+      setCitizens([...citizens, { ic: authIdentity, name: authName, password: authPassword, race: authRace, religion: authReligion, applications: [] }]);
+      setVerifiedIC(authIdentity); setIsLoggedIn(true); setIsMatching(false); setShowAuthModal(false);
+    }, 1500);
+  };
+
+  const handleLogout = () => {
+    setIsLoggingOut(true); setShowSidebar(false);
+    setTimeout(() => { setIsLoggedIn(false); setIsAdmin(false); setVerifiedIC(''); setAuthName(''); setProfileImage(null); changeAuthMode('menu'); setIsLoggingOut(false); }, 1200);
+  };
+
+  const editCitizenIdentity = (ic) => {
+    const c = citizens.find(cit => cit.ic === ic); if (!c) return;
+    const nN = prompt("Name:", c.name); const nR = prompt("Race:", c.race); const nRe = prompt("Religion:", c.religion);
+    if (nN && nR && nRe) setCitizens(prev => prev.map(cit => cit.ic === ic ? { ...cit, name: nN, race: nR, religion: nRe } : cit));
+  };
+
+  const switchAppStatus = (ic, appId) => {
+    const nS = prompt("Status (Approved / Pending / Rejected):");
+    if (["Approved", "Pending", "Rejected"].includes(nS)) {
+      setCitizens(prev => prev.map(c => c.ic === ic ? { ...c, applications: c.applications.map(a => a.id === appId ? { ...a, status: nS } : a) } : c));
+=======
   const validatePassword = (pw) => {
     const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     return regex.test(pw);
@@ -421,49 +490,48 @@ const handleAuthSubmit = async (e) => {
       heyReplies: ["Memadankan bantuan...", "Kemaskini paparan...", "Selamat kembali! 🦅"],
       profile: { guest: 'Pengguna Tamu', user: authName || 'User', signup: 'Daftar' },
       searchSuggestions: ['Biasiswa', 'Bantuan Kewangan', 'SCHB', 'Sambungan Air']
+>>>>>>> origin/main
     }
-  }), [language]);
-
-  const isEmailInput = useMemo(() => authIdentity.length > 0 && !/^[0-9-]*$/.test(authIdentity), [authIdentity]);
-
-  const filteredServices = useMemo(() => {
-    let list = services;
-    const q = searchQuery.toLowerCase().trim();
-    if (q) {
-      list = list.filter(cat => 
-        cat.title.en.toLowerCase().includes(q) || cat.title.ms.toLowerCase().includes(q) ||
-        cat.keywords.some(k => k.includes(q))
-      );
-    }
-    const ageNum = parseInt(ageInput);
-    const minIncNum = parseInt(minIncome);
-    list = list.filter(cat => {
-      const ageMatch = isNaN(ageNum) || (ageNum >= cat.minAge && ageNum <= cat.maxAge);
-      const incomeMatch = isNaN(minIncNum) || (minIncNum <= cat.maxIncome) || cat.maxIncome === 99999;
-      return ageMatch && incomeMatch;
-    });
-    return list;
-  }, [searchQuery, minIncome, ageInput, services]);
-
-  const addItem = (catId) => {
-    const name = prompt("Enter Service Name:");
-    const desc = prompt("Enter One Sentence Description:");
-    if (!name || !desc) return;
-    setServices(prev => prev.map(cat => cat.id === catId ? { ...cat, items: [...cat.items, { en: name, ms: name, desc }] } : cat));
   };
 
-  const deleteItem = (catId, idx) => {
-    setServices(prev => prev.map(cat => cat.id === catId ? { ...cat, items: cat.items.filter((_, i) => i !== idx) } : cat));
+  const handleEditCategory = (id) => {
+    const cat = services.find(s => s.id === id); const next = prompt("Rename:", cat.title.en);
+    if (next) setServices(prev => prev.map(c => c.id === id ? { ...c, title: { en: next } } : c));
   };
 
-  const addEmailSuffix = (suffix) => {
-    if (isIdentityVerified) setIsIdentityVerified(false);
-    if (!authIdentity.includes('@')) setAuthIdentity(authIdentity + suffix);
-    else setAuthIdentity(authIdentity.split('@')[0] + suffix);
+  const handleAddItem = (catId) => {
+    const n = prompt("Name:"); const d = prompt("Desc:"); const l = prompt("URL:");
+    if (n && d) setServices(services.map(s => s.id === catId ? { ...s, items: [...s.items, { en: n, desc: d, link: l || "#" }] } : s));
   };
 
-  // --- Effects ---
+  const handleEditItem = (catId, idx) => {
+    const item = services.find(c => c.id === catId).items[idx];
+    const nN = prompt("Name:", item.en); const nD = prompt("Desc:", item.desc); const nL = prompt("URL:", item.link);
+    if (nN && nD) setServices(services.map(s => s.id === catId ? { ...s, items: s.items.map((it, i) => i === idx ? { ...it, en: nN, desc: nD, link: nL || "#" } : it) } : s));
+  };
+
+  const handleAddNewCategory = () => {
+    const n = prompt("Title:"); if (n) setServices([...services, { id: Date.now(), title: { en: n }, icon: "LayoutGrid", items: [] }]);
+  };
+
+  const handleDeleteItem = (catId, idx) => { if (window.confirm("Remove?")) setServices(services.map(s => s.id === catId ? { ...s, items: s.items.filter((_, i) => i !== idx) } : s)); };
+
+  const changeLogo = () => { const n = prompt("Logo Label:", portalLogo); if (n) setPortalLogo(n.substring(0, 3).toUpperCase()); };
+
+  const handleConfirmPhoto = () => { setProfileImage(tempImage); setTempImage(null); setIsConfirmingPhoto(false); };
+  const handleCancelPhoto = () => { setTempImage(null); setIsConfirmingPhoto(false); };
+
+  // --- Search Filtering ---
+  const studentServices = useMemo(() => services.filter(s => s.group === "student" && s.title.en.toLowerCase().includes(searchQuery.toLowerCase())), [searchQuery, services]);
+  const sarawakServices = useMemo(() => services.filter(s => s.group === "service" && s.title.en.toLowerCase().includes(searchQuery.toLowerCase())), [searchQuery, services]);
+  const filteredCitizens = useMemo(() => citizens.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()) || c.ic.includes(searchQuery)), [searchQuery, citizens]);
+
   useEffect(() => {
+<<<<<<< HEAD
+    const hints = ['Aid', 'KGC', 'Portal'];
+    let idx = 0;
+    const interval = setInterval(() => { setPlaceholderText(`Search ${isAdmin ? 'Database' : 'Service'}...`); idx = (idx + 1) % hints.length; }, 4000);
+=======
     // Check if user is already logged in when the page loads
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
@@ -487,172 +555,150 @@ const handleAuthSubmit = async (e) => {
       dotIdx++;
       if (dotIdx > 3) { dotIdx = 0; wordIdx = (wordIdx + 1) % suggestions.length; }
     }, 600);
+>>>>>>> origin/main
     return () => clearInterval(interval);
-  }, [language, t]);
+  }, [isAdmin]);
 
   
 
   useEffect(() => { document.documentElement.classList.toggle('dark', darkMode); }, [darkMode]);
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) setShowProfileMenu(false);
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  useEffect(() => {
-    if (isLoggedIn) {
-      setAgeInput('28');
-      setMinIncome('3500');
-      setMaxIncome('3500');
-      setShowAdjustableFilters(false);
-    } else {
-      setAgeInput('');
-      setMinIncome('');
-      setMaxIncome('');
-    }
-  }, [isLoggedIn]);
-
   const toggleCategory = (id) => setExpandedCategoryId(expandedCategoryId === id ? null : id);
 
   return (
-    <div className={`min-h-screen transition-colors duration-500 font-sans ${darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
+    <div className={`min-h-screen relative font-sans transition-colors duration-500 ${darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
       
-      {/* Sign Out Loader */}
-      {isLoggingOut && (
-        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/80 backdrop-blur-md animate-in fade-in">
-           <div className="flex flex-col items-center gap-5">
-              <Loader2 className="w-12 h-12 text-yellow-500 animate-spin" />
-              <p className="text-white font-black uppercase tracking-[0.4em] text-[10px] animate-pulse">{t[language].logoutNote}</p>
-           </div>
+      {/* Global Loader */}
+      {(isLoggingOut || isMatching) && (
+        <div className="fixed inset-0 z-[150] flex flex-col items-center justify-center bg-black/80 text-center">
+           <Loader2 className="w-12 h-12 text-yellow-500 animate-spin mx-auto mb-6" />
+           <p className="text-white font-black uppercase tracking-[0.4em] text-[10px] animate-pulse">Processing...</p>
         </div>
       )}
 
-      {/* Header */}
-      <header className={`sticky top-0 z-40 border-b backdrop-blur-md transition-all ${darkMode ? 'bg-slate-900/90 border-slate-800 shadow-xl' : 'bg-white/95 border-slate-200 shadow-sm'}`}>
-        <div className="w-full px-6 md:px-12 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3 cursor-pointer group" onClick={() => {setSearchQuery(''); setShowAdjustableFilters(false);}}>
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-yellow-500 font-bold text-black text-xs shadow-lg transform group-hover:scale-110 transition-transform">KC</div>
-            <h1 className="font-black text-xl tracking-tighter uppercase">KENYALANG <span className="text-yellow-500">CARE</span></h1>
-          </div>
+      {/* SIDEBAR DRAWER */}
+      <div className={`fixed top-0 right-0 h-full w-[360px] z-[60] shadow-2xl transition-transform duration-500 ease-out transform ${showSidebar ? 'translate-x-0' : 'translate-x-full'} ${darkMode ? 'bg-slate-950 border-l border-white/5' : 'bg-white'}`}>
+         <div className="p-8 border-b border-slate-500/10 flex justify-between items-center font-bold">
+            {sidebarAuthMode !== 'menu' && <button onClick={() => changeAuthMode('menu')} className="text-[10px] font-black uppercase opacity-40 hover:opacity-100 flex items-center gap-2"><ChevronRight className="w-4 h-4 rotate-180" /> Back</button>}
+            <h3 className="font-black uppercase tracking-[0.3em] text-[10px] opacity-30 flex-grow text-center">My Menu</h3>
+            <button onClick={() => {setShowSidebar(false); changeAuthMode('menu');}} className="p-2 rounded-full hover:bg-slate-500/10"><X className="w-6 h-6" /></button>
+         </div>
 
-          <div className="flex items-center gap-3" ref={menuRef}>
-            <button onClick={() => setDarkMode(!darkMode)} className={`p-2.5 rounded-full transition-all ${darkMode ? 'bg-slate-800 text-yellow-500 hover:bg-slate-700' : 'bg-white text-slate-600 hover:bg-slate-100'}`}>
-               {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-            </button>
-            <div className="relative">
-              <button onClick={() => setShowProfileMenu(!showProfileMenu)} className={`flex items-center gap-3 p-1 pr-3 rounded-full border transition-all ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200 shadow-sm'} active:scale-95`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isLoggedIn ? (isAdmin ? 'bg-purple-500' : 'bg-green-500') : (darkMode ? 'bg-slate-700' : 'bg-black')}`}>
-                  <User className="w-5 h-5 text-white" />
-                </div>
-                <ChevronDown className={`w-4 h-4 transition-transform ${showProfileMenu ? 'rotate-180' : ''}`} />
-              </button>
-              {showProfileMenu && (
-                <div className={`absolute right-0 mt-3 w-72 rounded-3xl border-2 shadow-2xl overflow-hidden animate-in slide-in-from-top-2 duration-200 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100 text-slate-900'}`}>
-                  <div className={`p-6 border-b ${darkMode ? 'border-slate-800 bg-slate-800/30' : 'border-slate-50 bg-slate-50/50'}`}>
-                    <p className="font-bold text-lg leading-none">{isLoggedIn ? (isAdmin ? "Administrator" : t[language].profile.user) : t[language].profile.guest}</p>
-                    {isLoggedIn && !isAdmin && <p className="text-[9px] uppercase font-bold opacity-30 mt-1">ID: KC-{verifiedIC.split('-').join('')}</p>}
-                  </div>
-                  <div className="p-2 space-y-1">
-                    {!isLoggedIn ? (
-                      <>
-                        <button onClick={() => openAuth('login')} className={`w-full flex items-center gap-3 p-4 rounded-2xl font-bold text-sm transition-all hover:bg-slate-100 dark:hover:bg-yellow-500/10`}><LogIn className="w-5 h-5" /> {t[language].authTitle.login}</button>
-                        <button onClick={() => openAuth('signup')} className={`w-full flex items-center gap-3 p-4 rounded-2xl font-bold text-sm transition-all hover:bg-slate-100 dark:hover:bg-yellow-500/10`}><UserPlus className="w-5 h-5" /> {t[language].profile.signup}</button>
-                      </>
-                    ) : (
-                      <>
-                        {isAdmin && <button onClick={() => { setShowAdminPanel(true); setShowProfileMenu(false); }} className={`w-full flex items-center gap-3 p-4 rounded-2xl font-bold text-sm bg-purple-500/10 text-purple-500 hover:bg-purple-500 hover:text-white transition-all`}><Settings className="w-5 h-5" /> {t[language].adminPanel}</button>}
-                        <button onClick={() => { setShowProfileManagement(true); setShowProfileMenu(false); }} className={`w-full flex items-center gap-3 p-4 rounded-2xl font-bold text-sm transition-all hover:bg-slate-100 dark:hover:bg-yellow-500/10`}><ShieldCheck className="w-5 h-5" /> {t[language].manageProfile}</button>
-                        <button onClick={() => { setShowStatusBoard(true); setShowProfileMenu(false); }} className={`w-full flex items-center gap-3 p-4 rounded-2xl font-bold text-sm transition-all hover:bg-slate-100 dark:hover:bg-yellow-500/10`}><Clock className="w-5 h-5" /> {t[language].checkStatus}</button>
-                      </>
-                    )}
-                    <button onClick={() => setLanguage(language === 'en' ? 'ms' : 'en')} className="w-full p-4 rounded-2xl text-xs font-bold uppercase hover:bg-slate-100 dark:hover:bg-yellow-500/10 flex items-center justify-between border-t border-slate-800/10"><Globe className="w-4 h-4" /> {language === 'en' ? 'English' : 'Bahasa Melayu'}</button>
-                    {isLoggedIn && <button onClick={handleLogout} className="w-full p-4 text-red-500 font-bold text-sm flex items-center gap-3 hover:bg-red-500/5 rounded-2xl transition-all"><LogOut className="w-5 h-5" /> {t[language].profile.logout}</button>}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="w-full md:max-w-3xl mx-auto px-4 py-8 md:py-16 min-h-[65vh]">
-        {/* Search Bar */}
-        <div className="relative group mb-10">
-          <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-yellow-600 z-10" />
-          <input type="text" placeholder={placeholderText} className={`w-full pl-16 pr-16 py-6 rounded-3xl border-2 outline-none font-bold text-lg shadow-2xl transition-all backdrop-blur-md ${darkMode ? 'bg-white/10 border-white/20 focus:border-yellow-600 text-white' : 'bg-white border-slate-200 focus:border-black text-slate-900'}`} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-          <button onClick={() => setShowAdjustableFilters(!showAdjustableFilters)} className={`absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-xl transition-all z-10 ${showAdjustableFilters ? 'bg-yellow-500 text-black shadow-lg' : 'hover:bg-slate-100 dark:hover:bg-white/10 opacity-60 hover:opacity-100'}`}><SlidersHorizontal className="w-6 h-6" /></button>
-        </div>
-
-        {/* Filter */}
-        {showAdjustableFilters && (
-          <div className="flex justify-center mb-10">
-            <div className={`w-full max-w-lg rounded-[2.5rem] border-2 p-8 animate-in zoom-in-95 fade-in duration-200 backdrop-blur-md shadow-2xl ${darkMode ? 'bg-white/5 border-white/10' : 'bg-white border-slate-100'}`}>
-              <div className="flex justify-between items-center mb-8">
-                <div className="flex items-center gap-3"><div className="w-10 h-10 bg-yellow-500 rounded-xl flex items-center justify-center text-black shadow-lg"><Filter className="w-5 h-5" /></div><h2 className="text-lg font-bold uppercase tracking-tight">{t[language].matchTitle}</h2></div>
-                <button onClick={() => { setAgeInput(''); setMinIncome(''); setMaxIncome(''); }} className="text-[10px] font-bold text-red-500 uppercase hover:underline">Reset</button>
-              </div>
-              <div className="space-y-6">
-                <div className="space-y-2"><label className="text-[10px] font-bold uppercase opacity-40 px-1 tracking-[0.2em]">{t[language].filters.age}</label><input type="text" inputMode="numeric" placeholder={t[language].filters.placeholder} className={`w-full p-4 rounded-2xl border-2 font-bold outline-none transition-all ${darkMode ? 'bg-slate-800 border-slate-700 text-white focus:border-yellow-500' : 'bg-slate-50 border-slate-200 focus:border-black'}`} value={ageInput} onChange={handleAgeChange} /></div>
-                {parseInt(ageInput) >= 20 && (
-                  <div className="space-y-6 animate-in slide-in-from-top-4 fade-in duration-500"><div className="grid grid-cols-2 gap-4"><div className="space-y-2"><label className="text-[10px] font-bold uppercase opacity-40 px-1">{t[language].filters.incomeMin}</label><input type="text" inputMode="numeric" placeholder="0" className={`w-full p-4 rounded-2xl border-2 font-bold outline-none transition-all ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'}`} value={minIncome} onChange={(e) => setMinIncome(e.target.value.replace(/\D/g, ''))} /></div><div className="space-y-2"><label className="text-[10px] font-bold uppercase opacity-40 px-1">{t[language].filters.incomeMax}</label><input type="text" inputMode="numeric" placeholder="5000" className={`w-full p-4 rounded-2xl border-2 font-bold outline-none transition-all ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'}`} value={maxIncome} onChange={(e) => setMaxIncome(e.target.value.replace(/\D/g, ''))} /></div></div></div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Catalog */}
-        <div className="space-y-4">
-          {filteredServices.map(cat => (
-            <div key={cat.id} className={`rounded-3xl border-2 transition-all duration-500 backdrop-blur-md ${expandedCategoryId === cat.id ? 'scale-[1.01]' : 'border-slate-800/10'} ${darkMode ? 'bg-white/5' : 'bg-white/80'}`}>
-              <div onClick={() => toggleCategory(cat.id)} className="p-6 cursor-pointer flex items-center gap-6 relative overflow-hidden">
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors relative z-10 ${expandedCategoryId === cat.id ? 'bg-yellow-500 text-black shadow-lg shadow-yellow-500/30' : 'bg-slate-800/10'}`}>
-                  {React.createElement(IconMap[cat.icon] || GraduationCap, { className: "w-7 h-7" })}
-                </div>
-                <div className="flex-grow relative z-10"><h3 className={`font-bold text-xl uppercase tracking-tight transition-colors ${expandedCategoryId === cat.id ? 'text-yellow-600' : ''}`}>{cat.title[language]}</h3></div>
-                <ChevronDown className={`transition-transform duration-300 relative z-10 ${expandedCategoryId === cat.id ? 'rotate-180 text-yellow-500' : 'opacity-30'}`} />
-              </div>
-              {expandedCategoryId === cat.id && (
-                <div className="px-6 pb-6 space-y-4 animate-in slide-in-from-top-4 relative z-10">
-                  {cat.items.map((item, idx) => (
-                    <div key={idx} className={`p-6 rounded-3xl border transition-all flex items-start justify-between group ${darkMode ? 'bg-slate-900 border-white/5' : 'bg-slate-50 border-slate-100'}`}>
-                      <div className="flex-grow pr-6"><p className="font-black uppercase tracking-tight text-sm mb-1">{item[language]}</p><p className="text-[11px] font-medium opacity-60 leading-relaxed italic">"{item.desc}"</p></div>
-                      <button onClick={() => { setSelectedService(item); setShowApplicationForm(true); }} className={`p-3.5 rounded-2xl bg-white dark:bg-slate-800 border hover:bg-black hover:text-white dark:hover:bg-yellow-500 transition-all`}><ChevronRight className="w-5 h-5" /></button>
+         <div className="flex-grow overflow-y-auto scrollbar-hide p-8 text-center font-bold">
+            {sidebarAuthMode === 'menu' && (
+              <div className="space-y-10 animate-in fade-in zoom-in-95">
+                 <div className="flex flex-col items-center">
+                    <div className="relative group">
+                       <div className={`w-28 h-28 rounded-[2.5rem] flex items-center justify-center shadow-2xl overflow-hidden bg-slate-500/10 border-4 ${darkMode ? 'border-white/5' : 'border-white'}`}>
+                          {profileImage ? <img src={profileImage} className="w-full h-full object-cover" alt="Avatar" style={{transform: `scale(${imageScale})`}} /> : <User className="w-14 h-14 text-white/50" />}
+                       </div>
+                       {isLoggedIn && !isAdmin && <button onClick={() => fileInputRef.current.click()} className="absolute -bottom-2 -right-2 p-3 rounded-2xl bg-yellow-500 text-black shadow-lg transform hover:scale-110 active:scale-95 transition-all"><Camera className="w-5 h-5" /></button>}
+                       <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </main>
+                    {isConfirmingPhoto && (
+                      <div className="mt-8 p-6 rounded-3xl bg-slate-500/5 border border-yellow-500/20 animate-in slide-in-from-top-4">
+                         <div className="w-20 h-20 rounded-full overflow-hidden mx-auto border-2 border-yellow-500 shadow-inner mb-4">
+                            <img src={tempImage} className="w-full h-full object-cover" style={{transform: `scale(${imageScale})`}} alt="Preview" />
+                         </div>
+                         <input type="range" min="0.5" max="3" step="0.01" value={imageScale} onChange={(e) => setImageScale(parseFloat(e.target.value))} className="w-full accent-yellow-500 mb-6" />
+                         <div className="flex gap-2">
+                            <button onClick={handleCancelPhoto} className="flex-grow py-3 rounded-xl bg-slate-500/10 text-[9px] font-black uppercase">Cancel</button>
+                            <button onClick={handleConfirmPhoto} className="flex-grow py-3 rounded-xl bg-yellow-500 text-black text-[9px] font-black uppercase">Apply</button>
+                         </div>
+                      </div>
+                    )}
+                    {!isConfirmingPhoto && (
+                      <div className="mt-6">
+                         <h4 className="font-black uppercase tracking-tighter text-2xl leading-tight font-bold">{isLoggedIn ? authName : "GUEST USER"}</h4>
+                         {isLoggedIn && !isAdmin && <p className="text-[10px] font-bold opacity-30 mt-3 tracking-widest uppercase text-center font-bold">ID: KC-{verifiedIC.split('-').join('')}</p>}
+                         {isLoggedIn && isAdmin && <p className="text-[10px] font-black text-purple-500 mt-2 tracking-widest uppercase text-center font-bold">Admin Hub Active</p>}
+                      </div>
+                    )}
+                 </div>
 
-      {/* Profile Modal */}
-      {showProfileManagement && (
-        <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-in fade-in">
-          <div className={`w-full max-w-5xl h-[85vh] rounded-[3.5rem] flex flex-col md:flex-row overflow-hidden border-2 border-slate-800/20 ${darkMode ? 'bg-slate-900' : 'bg-white shadow-2xl'}`}>
-            <div className={`w-full md:w-72 p-8 border-b md:border-b-0 md:border-r ${darkMode ? 'border-white/5 bg-black/20' : 'border-slate-100 bg-slate-50/50'}`}>
-               <div className="mb-10 text-center md:text-left">
-                  <div className="w-20 h-20 bg-yellow-500 rounded-3xl mx-auto md:mx-0 flex items-center justify-center text-black mb-4 shadow-xl shadow-yellow-500/20"><UserRound className="w-10 h-10" /></div>
-                  <h3 className="font-black uppercase tracking-tighter text-xl leading-none">{t[language].profile.user}</h3>
-                  <p className="text-[9px] font-bold uppercase opacity-30 tracking-[0.2em] mt-3">ID: KC-{verifiedIC.split('-').join('')}</p>
-               </div>
-               <nav className="space-y-2">
-                  {['overview', 'update', 'security', 'activity'].map(id => (
-                    <button key={id} onClick={() => setProfileTab(id)} className={`w-full flex items-center gap-4 p-4 rounded-2xl font-bold text-sm transition-all ${profileTab === id ? 'bg-yellow-500 text-black shadow-lg' : 'opacity-40 hover:opacity-100'}`}>
-                      {id === 'overview' && <User className="w-5 h-5" />}
-                      {id === 'update' && <Edit3 className="w-5 h-5" />}
-                      {id === 'security' && <ShieldAlert className="w-5 h-5" />}
-                      {id === 'activity' && <Activity className="w-5 h-5" />}
-                      {id.charAt(0).toUpperCase() + id.slice(1)}
+                 {!isLoggedIn && !isConfirmingPhoto && (
+                   <div className="space-y-3 font-bold">
+                      <button onClick={() => changeAuthMode('login')} className="w-full py-5 rounded-3xl bg-black text-white dark:bg-white dark:text-black font-black uppercase text-xs tracking-widest shadow-xl transition-transform active:scale-95 font-bold">Log In</button>
+                      <button onClick={() => { setShowAuthModal(true); setSignUpStep(1); setAuthType('signup'); setShowSidebar(false); }} className="w-full py-5 rounded-3xl border-2 border-slate-500/20 font-black uppercase text-xs tracking-widest hover:bg-slate-500/5 transition-all text-xs font-bold">Sign Up</button>
+                   </div>
+                 )}
+
+                 {isLoggedIn && !isAdmin && !isConfirmingPhoto && (
+                   <div className="space-y-2 text-left font-bold">
+                      <button onClick={() => setSidebarAuthMode('overview')} className="w-full flex items-center gap-4 p-5 rounded-2xl bg-slate-500/5 font-black text-sm transition-all hover:bg-yellow-500/10 font-bold font-bold font-bold font-bold font-bold font-bold"><Fingerprint className="w-5 h-5 opacity-40" /> My Profile</button>
+                      <button onClick={() => setSidebarAuthMode('status')} className="w-full flex items-center gap-4 p-5 rounded-2xl bg-slate-500/5 font-black text-sm transition-all hover:bg-yellow-500/10 font-bold font-bold font-bold font-bold font-bold font-bold"><Clock className="w-5 h-5 opacity-40" /> Track Status</button>
+                      <button onClick={() => setSidebarAuthMode('security')} className="w-full flex items-center gap-4 p-5 rounded-2xl bg-slate-500/5 font-black text-sm transition-all hover:bg-yellow-500/10 font-bold font-bold font-bold font-bold font-bold font-bold"><ShieldAlert className="w-5 h-5 opacity-40" /> Security</button>
+                   </div>
+                 )}
+
+                 <div className="space-y-3 pt-6 border-t border-slate-500/10 font-bold">
+                    <button onClick={() => setDarkMode(!darkMode)} className="w-full flex items-center justify-between p-5 rounded-3xl bg-slate-500/5 transition-all font-bold">
+                       <div className="flex items-center gap-4">{darkMode ? <Sun className="w-5 h-5 text-yellow-500" /> : <Moon className="w-5 h-5" />}<span className="font-black text-xs uppercase">{darkMode ? 'Light' : 'Dark'} Mode</span></div>
+                       <div className={`w-10 h-5 rounded-full relative transition-colors ${darkMode ? 'bg-yellow-500' : 'bg-slate-300'}`}><div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${darkMode ? 'left-6' : 'left-1'}`} /></div>
                     </button>
-                  ))}
-               </nav>
-               <button onClick={handleLogout} className="w-full flex items-center gap-4 p-4 mt-8 text-red-500 font-bold text-sm hover:bg-red-500/5 rounded-2xl transition-all"><LogOut className="w-5 h-5" /> Sign Out</button>
+                 </div>
+              </div>
+            )}
+
+            {sidebarAuthMode === 'report-bug' && (
+              <div className="animate-in slide-in-from-right-4 text-left space-y-6 font-bold">
+                 <h4 className="font-black uppercase text-2xl mb-4">Report Issue</h4>
+                 <div className="space-y-2 font-bold"><label className="text-[10px] font-black uppercase opacity-40 px-1 font-bold">Describe Issue</label><textarea value={bugDesc} onChange={(e) => setBugDesc(e.target.value)} rows="5" className="w-full p-5 rounded-2xl border-2 font-medium bg-transparent outline-none focus:border-red-500/50 font-bold" /></div>
+                 <div className="space-y-2 font-bold"><label className="text-[10px] font-black uppercase opacity-40 px-1 font-bold">Screenshot</label><div onClick={() => bugInputRef.current.click()} className="w-full p-8 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer">{bugScreen ? <img src={bugScreen} className="h-24 rounded-lg" alt="P" /> : <Image className="w-8 h-8 opacity-20" />}</div><input type="file" ref={bugInputRef} className="hidden" accept="image/*" onChange={handleBugScreenshot} /></div>
+                 <button onClick={submitBug} className="w-full py-5 rounded-3xl bg-red-600 text-white font-black uppercase tracking-widest shadow-xl active:scale-95 font-bold">Submit Report</button>
+              </div>
+            )}
+
+            {(sidebarAuthMode === 'login' || sidebarAuthMode === 'admin-login') && (
+              <div className="animate-in slide-in-from-right-4 text-left font-bold">
+                 <h4 className="font-black uppercase text-2xl mb-8 font-bold">{sidebarAuthMode === 'login' ? 'User Access' : 'Admin Unlock'}</h4>
+                 {authError && <div className="mb-6 p-4 rounded-2xl bg-red-500/10 text-red-500 text-[10px] font-black uppercase flex items-center gap-3 animate-shake font-bold"><AlertTriangle className="w-4 h-4 font-bold" /> {authError}</div>}
+                 <form onSubmit={isIdentityVerified ? handleLoginSubmit : handleVerifyIdentity} className="space-y-6 font-bold">
+                    <div className="space-y-2 font-bold"><label className="text-[10px] font-black uppercase opacity-40 px-1 font-bold">Identity ID</label><input type="text" value={authIdentity} onChange={handleIdentityChange} className={`w-full p-5 rounded-2xl border-2 font-black outline-none bg-transparent ${isIdentityVerified ? 'border-green-500/40' : ''}`} /></div>
+                    {isIdentityVerified && (<div className="space-y-2 font-bold"><label className="text-[10px] font-black uppercase opacity-40 px-1 font-bold">{sidebarAuthMode === 'login' ? 'Password' : 'Verified Email'}</label><input type={sidebarAuthMode === 'login' ? "password" : "email"} value={sidebarAuthMode === 'login' ? authPassword : authEmail} onChange={(e) => sidebarAuthMode === 'login' ? setAuthPassword(e.target.value) : setAuthEmail(e.target.value)} className="w-full p-5 rounded-2xl border-2 font-black outline-none bg-transparent" /></div>)}
+                    <button type="submit" className={`w-full py-5 rounded-3xl text-white font-black uppercase tracking-widest shadow-xl transition-all active:scale-95 font-bold ${sidebarAuthMode === 'login' ? 'bg-black dark:bg-white dark:text-black' : 'bg-purple-600'}`}>{isVerifying ? <Loader2 className="animate-spin mx-auto" /> : (isIdentityVerified ? 'Access Portal' : 'Verify ID')}</button>
+                 </form>
+              </div>
+            )}
+         </div>
+
+         <div className="p-8 border-t border-slate-500/10 text-center space-y-4 font-bold">
+            {!isConfirmingPhoto && <button onClick={triggerBugAnimation} className="w-full py-4 rounded-2xl border border-red-500/20 text-red-500 font-black text-[10px] uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all font-bold">Report Bug</button>}
+            {!isLoggedIn && sidebarAuthMode === 'menu' && !isConfirmingPhoto && <button onClick={() => changeAuthMode('admin-login')} className="w-full py-3 text-[10px] font-black uppercase opacity-10 hover:opacity-100 hover:text-purple-500 transition-all text-xs font-bold">Hey Admin</button>}
+            {isLoggedIn && <button onClick={handleLogout} className="w-full flex items-center justify-center gap-4 p-5 text-red-500 font-black text-sm hover:bg-red-500/10 rounded-3xl transition-all active:scale-95 font-bold"><LogOut className="w-5 h-5" /> Sign Out</button>}
+         </div>
+      </div>
+
+      {/* MAIN WRAPPER */}
+      <div className={`transition-transform duration-500 ease-out flex flex-col min-h-screen ${showSidebar ? '-translate-x-[360px]' : 'translate-x-0'}`}>
+        <header className={`sticky top-0 z-40 border-b backdrop-blur-md transition-all ${darkMode ? 'bg-slate-900/90 border-slate-800 shadow-xl' : 'bg-white/95 border-slate-200'}`}>
+          <div className="w-full px-6 md:px-12 h-20 flex items-center justify-between font-bold">
+            <div className="flex items-center gap-3 cursor-pointer group" onClick={() => setSearchQuery('')}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-yellow-500 font-bold text-black text-xs shadow-lg transform group-hover:scale-110 transition-transform">{portalLogo}</div>
+              <h1 className="font-black text-xl tracking-tighter uppercase font-bold">KENYALANG <span className="text-yellow-500 font-bold">CARE</span></h1>
             </div>
+<<<<<<< HEAD
+            <button onClick={() => setShowSidebar(true)} className={`p-3 rounded-2xl border transition-all hover:shadow-lg active:scale-95 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200 shadow-sm'}`}><Menu className="w-6 h-6 opacity-60 font-bold" /></button>
+          </div>
+        </header>
+
+        <main className="flex-grow w-full md:max-w-3xl mx-auto px-4 py-8 md:py-16 text-center font-bold">
+          <div className="relative group mb-12 font-bold"><Search className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-yellow-600 z-10 font-bold" /><input type="text" placeholder={placeholderText} className={`w-full pl-16 pr-6 py-7 rounded-3xl border-2 outline-none font-bold text-lg shadow-2xl transition-all ${darkMode ? 'bg-white/10 border-white/20 text-white font-bold' : 'bg-white border-slate-200 focus:border-black font-bold'}`} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} /></div>
+
+          {isLoggedIn && isAdmin && (
+            <div className="mb-12 space-y-8 animate-in slide-in-from-top-4 duration-500 text-left font-bold">
+               <div className="rounded-[2.5rem] border-2 border-purple-500/20 bg-purple-500/5 backdrop-blur-md overflow-hidden font-bold">
+                  <div className="p-8 flex items-center justify-between font-bold"><div className="flex items-center gap-4 text-purple-600 font-bold"><UserCog className="w-6 h-6 font-bold" /><h2 className="text-xl font-black uppercase tracking-tighter font-bold">Citizen Hub</h2></div><button onClick={() => setIsCitizenHubMinimized(!isCitizenHubMinimized)} className="p-3 rounded-2xl bg-purple-600/10 text-purple-600 font-bold">{isCitizenHubMinimized ? <ChevronDown className="w-5 h-5 font-bold" /> : <ChevronUp className="w-5 h-5 font-bold" />}</button></div>
+                  {!isCitizenHubMinimized && <div className="px-8 pb-10 space-y-4 font-bold">{filteredCitizens.map(citizen => (<div key={citizen.ic} className="p-5 rounded-[2rem] border border-purple-500/20 bg-white dark:bg-black/40 shadow-sm space-y-4 font-bold"><div className="flex flex-col md:flex-row md:items-center justify-between gap-4 font-bold"><div><h4 className="text-lg font-black uppercase font-bold">{citizen.name}</h4><p className="text-[9px] font-bold opacity-30 font-bold">IC: {citizen.ic} • {citizen.race} • {citizen.religion}</p></div><button onClick={() => editCitizenIdentity(citizen.ic)} className="flex items-center gap-2 px-5 py-2 rounded-xl bg-purple-600 text-white font-black uppercase text-[9px] font-bold"><Edit3 className="w-3 h-3 font-bold" /> Edit Identity</button></div><div className="pt-3 border-t border-purple-500/5 font-bold">{citizen.applications.map(app => (<div key={app.id} className="flex items-center justify-between p-3 rounded-xl bg-black/5 dark:bg-white/5 font-bold"><p className="font-black text-[10px] uppercase font-bold">{app.name}</p><div className="flex items-center gap-3 font-bold"><span className={`px-2.5 py-1 rounded-lg text-[8px] font-black text-white uppercase font-bold ${app.status === 'Approved' ? 'bg-green-500' : 'bg-yellow-500'}`}>{app.status}</span><button onClick={() => switchAppStatus(citizen.ic, app.id)} className="p-1.5 rounded-lg bg-purple-100 text-purple-600 font-bold"><RefreshCw className="w-3.5 h-3.5 font-bold" /></button></div></div>))}</div></div>))}</div>}
+               </div>
+               <div className="rounded-[2.5rem] border-2 border-red-500/20 bg-red-500/5 backdrop-blur-md overflow-hidden font-bold">
+                  <div className="p-8 flex items-center justify-between font-bold"><div className="flex items-center gap-4 text-red-600 font-bold"><Bug className="w-6 h-6 font-bold" /><h2 className="text-xl font-black uppercase tracking-tighter font-bold">Bug Reports</h2></div><button onClick={() => setIsBugHubMinimized(!isBugHubMinimized)} className="p-3 rounded-2xl bg-red-600/10 text-red-600 font-bold">{isBugHubMinimized ? <ChevronDown className="w-5 h-5 font-bold" /> : <ChevronUp className="w-5 h-5 font-bold" />}</button></div>
+                  {!isBugHubMinimized && <div className="px-8 pb-10 space-y-4 font-bold">{bugReports.map(bug => (<div key={bug.id} className="p-5 rounded-[2rem] border border-red-500/20 bg-white dark:bg-black/40 shadow-sm space-y-4 font-bold"><p className="text-[10px] font-black uppercase text-red-500 font-bold">ID: #{bug.id.toString().slice(-4)} • {bug.time}</p><p className="text-xs font-medium italic font-bold">"{bug.desc}"</p>{bug.screenshot && <img src={bug.screenshot} className="h-20 w-20 rounded-lg shadow" alt="Bug" />}<div className="pt-3 border-t border-red-500/10 flex justify-between items-center font-bold"><p className="text-[8px] font-black uppercase opacity-40 font-bold">Reporter: {bug.user}</p><button onClick={() => setBugReports(bugReports.filter(b => b.id !== bug.id))} className="text-[8px] font-black text-red-500 hover:underline font-bold">Resolve</button></div></div>))}</div>}
+               </div>
+               <div className="rounded-[2.5rem] border-2 border-purple-500/20 bg-purple-500/5 backdrop-blur-md overflow-hidden font-bold">
+                  <div className="p-8 flex items-center justify-between font-bold"><div className="flex items-center gap-4 text-purple-600 font-bold"><LayoutGrid className="w-6 h-6 font-bold" /><h2 className="text-xl font-black uppercase tracking-tighter font-bold">Service Hub</h2></div><div className="flex gap-2 font-bold"><button onClick={changeLogo} className="p-3 rounded-2xl bg-white text-purple-500 text-[9px] font-black uppercase font-bold">Logo: {portalLogo}</button><button onClick={() => setIsCatalogHubMinimized(!isCatalogHubMinimized)} className="p-3 rounded-2xl bg-purple-600/10 text-purple-600 font-bold">{isCatalogHubMinimized ? <ChevronDown className="w-5 h-5 font-bold" /> : <ChevronUp className="w-5 h-5 font-bold" />}</button></div></div>
+                  {!isCatalogHubMinimized && <div className="px-8 pb-10 space-y-6 font-bold font-bold font-bold font-bold font-bold"><button onClick={handleAddNewCategory} className="w-full py-4 rounded-2xl bg-purple-600 text-white font-black uppercase text-[10px] font-bold">New Category</button>{services.map(cat => (<div key={cat.id} className="p-5 rounded-3xl border border-purple-500/10 bg-white/30 dark:bg-black/20 space-y-4 font-bold font-bold font-bold"><div className="flex items-center justify-between pb-3 border-b border-purple-500/5 font-bold font-bold"><h4 className="font-black text-sm uppercase text-purple-400 font-bold">{cat.title.en}</h4><div className="flex gap-2 font-bold"><button onClick={() => handleEditCategory(cat.id)} className="p-1.5 rounded-lg text-purple-500 font-bold"><Edit3 className="w-4 h-4 font-bold" /></button><button onClick={() => handleAddItem(cat.id)} className="p-1.5 rounded-lg bg-purple-600 text-white font-bold"><Plus className="w-4 h-4 font-bold" /></button></div></div><div className="grid gap-3 font-bold">{cat.items.map((it, idx) => (<div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-slate-800 shadow-sm font-bold"><div className="flex-grow pr-4 font-bold"><p className="font-black text-[11px] uppercase font-bold">{it.en}</p><p className="text-[9px] opacity-40 italic font-bold font-bold">"{it.desc}"</p></div><div className="flex gap-2 font-bold"><button onClick={() => handleEditItem(cat.id, idx)} className="p-1.5 rounded-lg text-slate-500 font-bold"><Settings className="w-3 h-3 font-bold" /></button><button onClick={() => handleDeleteItem(cat.id, idx)} className="p-1.5 rounded-lg text-red-500 font-bold"><Trash2 className="w-3 h-3 font-bold" /></button></div></div>))}</div></div>))}</div>}
+=======
             <div className="flex-grow flex flex-col h-full">
                <div className="p-8 border-b border-white/5 flex justify-between items-center"><h4 className="font-black uppercase tracking-tighter text-2xl">{profileTab}</h4><button onClick={() => setShowProfileManagement(false)} className="p-3 rounded-full bg-slate-500/10"><X className="w-5 h-5" /></button></div>
                <div className="flex-grow p-10 overflow-y-auto scrollbar-hide">
@@ -693,9 +739,32 @@ const handleAuthSubmit = async (e) => {
                        <button onClick={() => setProfileTab('overview')} className="w-full py-5 rounded-2xl bg-yellow-500 text-black font-black uppercase tracking-[0.2em] shadow-xl hover:scale-[1.02] active:scale-95 transition-all">Save Profile Updates</button>
                     </div>
                   )}
+>>>>>>> origin/main
                </div>
             </div>
+          )}
+
+          {!isAdmin && (
+            <div className="space-y-16 font-bold">
+              <div className="space-y-6 font-bold text-left px-4"><h2 className="text-3xl font-black uppercase flex items-center gap-4 font-bold"><SchoolIcon className="text-yellow-600 font-bold" /> School and Student</h2><div className="space-y-4 font-bold">{studentServices.map(cat => (<div key={cat.id} className={`rounded-[2.5rem] border-2 transition-all duration-500 overflow-hidden ${expandedCategoryId === cat.id ? 'border-yellow-500 shadow-lg' : 'border-slate-800/10'}`}><div onClick={() => toggleCategory(cat.id)} className="p-8 cursor-pointer flex items-center gap-8 font-bold"><div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all ${expandedCategoryId === cat.id ? 'bg-yellow-500 text-black rotate-12 shadow-lg' : 'bg-slate-800/10'}`}>{React.createElement(IconMap[cat.icon] || GraduationCap, { className: "w-7 h-7 font-bold" })}</div><div className="flex-grow font-bold"><h3 className={`font-black text-lg uppercase font-bold ${expandedCategoryId === cat.id ? 'text-yellow-600' : ''}`}>{cat.title.en}</h3></div><ChevronDown className={`transition-transform duration-500 ${expandedCategoryId === cat.id ? 'rotate-180 text-yellow-500' : 'opacity-20'}`} /></div>{expandedCategoryId === cat.id && <div className="px-8 pb-10 space-y-4 font-bold text-left">{cat.items.map((item, idx) => (<div key={idx} className="p-4 border-b border-slate-500/10 group last:border-none font-bold font-bold"><a href={item.link} target="_blank" rel="noopener noreferrer" className="font-black uppercase text-sm block hover:text-yellow-600 font-bold font-bold">{item.en}</a><p className="text-[10px] opacity-60 italic font-bold">"{item.desc}"</p></div>))}</div>}</div>))}</div></div>
+              <div className="space-y-6 font-bold text-left px-4"><h2 className="text-3xl font-black uppercase flex items-center gap-4 font-bold font-bold font-bold"><Globe className="text-yellow-600 font-bold" /> Service Sarawak</h2><div className="space-y-4 font-bold">{sarawakServices.map(cat => (<div key={cat.id} className={`rounded-[2.5rem] border-2 transition-all duration-500 overflow-hidden ${expandedCategoryId === cat.id ? 'border-yellow-500 shadow-lg' : 'border-slate-800/10'}`}><div onClick={() => toggleCategory(cat.id)} className="p-8 cursor-pointer flex items-center gap-8 font-bold"><div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all ${expandedCategoryId === cat.id ? 'bg-yellow-500 text-black rotate-12 shadow-lg' : 'bg-slate-800/10'}`}>{React.createElement(IconMap[cat.icon] || GraduationCap, { className: "w-7 h-7 font-bold" })}</div><div className="flex-grow font-bold"><h3 className={`font-black text-lg uppercase font-bold ${expandedCategoryId === cat.id ? 'text-yellow-600' : ''}`}>{cat.title.en}</h3></div><ChevronDown className={`transition-transform duration-500 ${expandedCategoryId === cat.id ? 'rotate-180 text-yellow-500' : 'opacity-20'}`} /></div>{expandedCategoryId === cat.id && <div className="px-8 pb-10 space-y-4 font-bold text-left font-bold font-bold">{cat.items.map((item, idx) => (<div key={idx} className="p-4 border-b border-slate-500/10 group last:border-none font-bold font-bold font-bold"><a href={item.link} target="_blank" rel="noopener noreferrer" className="font-black uppercase text-sm block hover:text-yellow-600 font-bold font-bold">{item.en}</a><p className="text-[10px] opacity-60 italic font-bold font-bold font-bold">"{item.desc}"</p></div>))}</div>}</div>))}</div></div>
+            </div>
+          )}
+        </main>
+
+        <footer className={`mt-24 py-20 border-t ${darkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-white border-slate-200'}`}>
+          <div className="w-full md:max-w-3xl mx-auto px-4 text-center font-bold">
+            <div className="flex items-center justify-center gap-12 text-xs font-medium opacity-60 mb-12 font-bold font-bold font-bold font-bold font-bold">
+              <button onClick={() => setShowAboutUs(true)} className="hover:text-yellow-600 transition-all font-bold uppercase tracking-widest font-bold">About us</button>
+              <span className="opacity-10 font-bold">•</span>
+              <a href={UI_TEXT.privacyUrl} target="_blank" rel="noopener noreferrer" className="hover:text-yellow-600 transition-all font-bold tracking-widest font-bold">Privacy policy</a>
+            </div>
+            <p className="text-[10px] opacity-20 uppercase font-black tracking-[0.4em] font-bold font-bold font-bold font-bold">© 2026 Kenyalang Care. Digital Sarawak Unit.</p>
           </div>
+<<<<<<< HEAD
+        </footer>
+      </div>
+=======
         </div>
       )}
 
@@ -877,22 +946,28 @@ const handleAuthSubmit = async (e) => {
           <p className="text-[9px] opacity-20 uppercase font-black tracking-[0.3em]">© 2026 Kenyalang Care. Digital Sarawak Unit.</p>
         </div>
       </footer>
+>>>>>>> origin/main
 
+      {/* ABOUT US Speach Bubble */}
       {showAboutUs && (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/70 backdrop-blur-lg animate-in fade-in">
-          <div className={`w-full max-w-lg rounded-[3.5rem] p-12 text-center shadow-2xl ${darkMode ? 'bg-slate-900 border-2 border-slate-800' : 'bg-white'}`}>
-            <Info className="w-12 h-12 text-yellow-500 mx-auto mb-10" />
-            <h3 className="text-3xl font-black uppercase mb-8 tracking-tighter">{t[language].aboutUs}</h3>
-            <p className="text-sm opacity-70 mb-12 leading-[1.8] font-medium text-justify">{t[language].aboutDetail}</p>
-            <button onClick={() => setShowAboutUs(false)} className={`w-full py-6 rounded-[2rem] bg-black text-white font-black uppercase tracking-[0.3em] hover:bg-yellow-500 hover:text-black transition-all shadow-xl`}>{t[language].close}</button>
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/40 font-bold" onClick={() => setShowAboutUs(false)}>
+          <div className={`relative w-full max-w-md rounded-[2.5rem] p-10 text-center shadow-2xl animate-in zoom-in-95 duration-300 ${darkMode ? 'bg-slate-900 border-2 border-slate-800' : 'bg-white font-bold'}`} onClick={e => e.stopPropagation()}>
+            <MessageSquare className="w-10 h-10 text-yellow-500 mx-auto mb-6 font-bold" />
+            <h3 className="text-2xl font-black uppercase mb-4 tracking-tighter font-bold font-bold">About Us</h3>
+            <p className="text-sm opacity-80 leading-[1.6] font-bold text-justify mb-8 font-bold font-bold font-bold">{UI_TEXT.about}</p>
+            <button onClick={() => setShowAboutUs(false)} className="w-full py-4 rounded-2xl bg-black text-white dark:bg-white dark:text-black font-black uppercase tracking-[0.2em] text-xs hover:scale-105 transition-all font-bold font-bold font-bold font-bold font-bold">Close Bubble</button>
           </div>
         </div>
       )}
 
-      {isReportingBug && (
-        <div className="fixed inset-0 z-[70] pointer-events-none flex items-center justify-center overflow-hidden">
-          <div className="absolute bottom-0 animate-bug-upward"><Bug className="w-24 h-24 text-yellow-500" /></div>
-          <div className={`px-10 py-5 bg-black text-white rounded-full font-black shadow-2xl animate-in zoom-in-50 border border-white/10`}>{t[language].bugThanks}</div>
+      {/* SIGN UP FLOW */}
+      {showAuthModal && (
+        <div className="fixed inset-0 z-[100] flex flex-col bg-white dark:bg-slate-950 animate-in fade-in overflow-y-auto font-bold font-bold">
+          <div className="w-full max-w-5xl mx-auto p-8 md:p-16 relative flex-grow flex flex-col text-left font-bold font-bold">
+            <button onClick={() => {setShowAuthModal(false); setSignUpStep(1);}} className="absolute top-8 right-8 p-3 rounded-full hover:bg-slate-500/10 transition-colors font-bold font-bold"><X className="w-8 h-8 opacity-40 font-bold font-bold font-bold" /></button>
+            <div className="text-center mb-16 font-bold"><h3 className="text-5xl font-black uppercase tracking-tighter mb-4 font-bold font-bold font-bold">Registration Hub</h3><p className="text-sm font-bold opacity-30 uppercase tracking-[0.6em] font-bold font-bold font-bold font-bold">Official Sarawak Digital Identity</p></div>
+            <button onClick={() => setShowAuthModal(false)} className="w-full py-8 rounded-[2.5rem] bg-black text-white font-black uppercase tracking-widest shadow-2xl hover:scale-[1.02] active:scale-95 transition-all text-xl mt-auto font-bold font-bold">Enter Hub <ChevronRight className="inline-block ml-4 font-bold font-bold" /></button>
+          </div>
         </div>
       )}
 
