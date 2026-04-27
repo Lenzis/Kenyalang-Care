@@ -1,16 +1,14 @@
-# React + Vite
+Kenyalang Care, your gateway to Sarawak assistance programmes.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+<img width="2816" height="1536" alt="Logo Dark Transparent" src="https://github.com/user-attachments/assets/e40d4843-34b9-4183-bf67-da1e4be4820b" />
+The best web app made possible by Elvin, Andreas and Anthony!
 
-Currently, two official plugins are available:
+## Built With
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+* [React](https://reactjs.org) - The web framework used
+* [Tailwind CSS](https://tailwindcss.com) - For styling
+* [Supabase](https://supabase.com) - Database and Authentication
 
-## React Compiler
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+This web app is for our assignment on CSS3133 Object Oriented Programming.
+Due Date: 25th May 2026.
