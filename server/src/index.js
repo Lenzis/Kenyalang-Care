@@ -4,6 +4,7 @@ import { openDb, getConfig } from "./db.js";
 import fs from "node:fs";
 import path from "node:path";
 
+
 const { port, allowedOrigin } = getConfig();
 const db = openDb();
 
@@ -30,42 +31,72 @@ app.get("/health", (_req, res) => {
   res.json({ ok: true });
 });
 
-app.get("/api/services", (_req, res) => {
-  const categories = db
-    .prepare(
-      `SELECT id, title_en, title_ms, icon_key
-       FROM service_category
-       ORDER BY sort_order ASC, id ASC`
-    )
-    .all();
-
-  const items = db
-    .prepare(
-      `SELECT id, category_id, label
-       FROM service_item
-       ORDER BY category_id ASC, sort_order ASC, id ASC`
-    )
-    .all();
-
-  const itemsByCategory = new Map();
-  for (const it of items) {
-    const arr = itemsByCategory.get(it.category_id) ?? [];
-    arr.push(it.label);
-    itemsByCategory.set(it.category_id, arr);
+// Parent Class 
+class BaseController {
+  constructor(database) {
+    this.database = database;
   }
 
-  const payload = categories.map((c) => ({
-    id: c.id,
-    title: { en: c.title_en, ms: c.title_ms },
-    iconKey: c.icon_key,
-    items: itemsByCategory.get(c.id) ?? [],
-  }));
+ 
+  processRequest() {
+    return { error: "This method should be overridden by child classes." };
+  }
+}
 
+// Child class (inherit using extends) 
+class ServiceController extends BaseController {
+  constructor(database) {
+    super(database); // Passes the database connection up to the parent
+  }
+
+  // Polymorphism
+  processRequest() {
+    // Fetch Categories
+    const categories = this.database.prepare(
+      `SELECT id, title_en, title_ms, icon_key 
+       FROM service_category ORDER BY sort_order ASC, id ASC`
+    ).all();
+
+    // Fetch Items
+    const items = this.database.prepare(
+      `SELECT id, category_id, label 
+       FROM service_item ORDER BY category_id ASC, sort_order ASC, id ASC`
+    ).all();
+
+    // Map items to categories
+    const itemsByCategory = new Map();
+    for (const it of items) {
+      const arr = itemsByCategory.get(it.category_id) ?? [];
+      arr.push(it.label);
+      itemsByCategory.set(it.category_id, arr);
+    }
+
+    // Return the final formatted payload
+    return categories.map((c) => ({
+      id: c.id,
+      title: { en: c.title_en, ms: c.title_ms },
+      iconKey: c.icon_key,
+      items: itemsByCategory.get(c.id) ?? [],
+    }));
+  }
+}
+
+app.get("/api/services", (_req, res) => {
+  // Instantiate the object and pass in your 'db' variable
+  const serviceApi = new ServiceController(db); 
+  
+  // Call the polymorphic method to get the data
+  const payload = serviceApi.processRequest(); 
+  
   res.json(payload);
 });
 
-app.listen(port, () => {
-  console.log(`API running on http://localhost:${port}`);
-  console.log(`CORS allowed origin: ${allowedOrigin}`);
+app.get("/api/services", (_req, res) => {
+  // Instantiate the object and pass in your 'db' variable
+  const serviceApi = new ServiceController(db); 
+  
+  // Call the polymorphic method to get the data
+  const payload = serviceApi.processRequest(); 
+  
+  res.json(payload);
 });
-
