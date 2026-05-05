@@ -1,13 +1,1642 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>kenyalang-care</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Kenyalang Care</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    /* Native Momentum Scrolling for iOS/Android */
+    .smooth-scroll {
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-y: contain;
+    }
+    
+    /* Prevent iOS Input Auto-Zoom */
+    @media screen and (max-width: 768px) {
+      input, select, textarea {
+        font-size: 16px !important;
+      }
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+    .animate-shake { animation: shake 0.5s ease-in-out; }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .animate-in { animation: fadeIn 0.3s ease-out forwards; }
+    
+    @keyframes slideInRight {
+      from { transform: translateX(20px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    .slide-in-from-right-4 { animation: slideInRight 0.4s ease-out forwards; }
+    
+    @keyframes slideInTop {
+      from { transform: translateY(-20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .slide-in-from-top-4 { animation: slideInTop 0.4s ease-out forwards; }
+
+    @keyframes slideInBottom {
+      from { transform: translateY(30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .slide-in-from-bottom-8 { animation: slideInBottom 0.5s ease-out forwards; }
+
+    @keyframes zoomIn {
+      from { transform: scale(0.95); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .zoom-in-95 { animation: zoomIn 0.3s ease-out forwards; }
+
+    .scrollbar-hide::-webkit-scrollbar {
+      display: none;
+    }
+    .scrollbar-hide {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+    }
+  </script>
+</head>
+<body class="min-h-screen relative overflow-x-hidden font-sans transition-colors duration-500 bg-slate-50 text-slate-900 dark:bg-black dark:text-slate-100">
+
+  <!-- Loader Overlay -->
+  <div id="loader" class="fixed inset-0 z-[150] flex-col items-center justify-center bg-black/80 text-center" style="display: none;">
+    <i data-lucide="loader-2" class="w-12 h-12 text-yellow-500 animate-spin mx-auto mb-6"></i>
+    <p class="text-white font-black uppercase tracking-[0.4em] text-[10px] animate-pulse">Processing...</p>
+  </div>
+
+  <!-- Sidebar Backdrop -->
+  <div id="sidebar-backdrop" onclick="toggleSidebar(false)" class="fixed inset-0 bg-black/20 dark:bg-black/60 backdrop-blur-sm z-[50] opacity-0 pointer-events-none transition-opacity duration-500"></div>
+
+  <!-- Sidebar Drawer -->
+  <div id="sidebar" class="fixed top-0 right-0 w-[90%] max-w-[360px] z-[60] shadow-2xl transition-transform duration-500 ease-out transform translate-x-full bg-white dark:bg-[#0a0a0a] dark:border-l dark:border-[#222] flex flex-col" style="height: 100vh; height: 100dvh;">
+    
+    <div class="flex-none p-6 md:p-8 border-b border-slate-500/10 dark:border-[#222] flex justify-between items-center relative">
+      <div class="flex gap-2 items-center z-10">
+         <button id="theme-toggle-btn" onclick="toggleTheme()" class="p-2 rounded-full hover:bg-slate-500/10 dark:hover:bg-[#222] transition-colors">
+            <i data-lucide="moon" class="w-5 h-5"></i>
+         </button>
+      </div>
+      <h3 class="font-black uppercase tracking-[0.3em] text-[10px] opacity-30 absolute left-1/2 transform -translate-x-1/2">My Menu</h3>
+      <button onclick="toggleSidebar(false)" class="p-2 rounded-full hover:bg-slate-500/10 dark:hover:bg-[#222] z-10 transition-colors">
+        <i data-lucide="x" class="w-6 h-6"></i>
+      </button>
+    </div>
+
+    <div id="sidebar-content" class="flex-1 overflow-y-auto smooth-scroll scrollbar-hide p-6 md:p-8 text-center font-medium">
+      <!-- Dynamic Content Injected Here -->
+    </div>
+
+    <div id="sidebar-footer" class="flex-none p-6 md:p-8 border-t border-slate-500/10 dark:border-[#222] text-center space-y-4 bg-slate-50 dark:bg-[#0a0a0a]">
+      <!-- Dynamic Footer Injected Here -->
+    </div>
+  </div>
+
+  <!-- Main Wrapper -->
+  <div id="main-wrapper" class="flex flex-col min-h-screen w-full transition-transform duration-500 ease-out">
+    <header id="header" class="sticky top-0 z-40 border-b backdrop-blur-md transition-all bg-white/95 border-slate-200 dark:bg-black/90 dark:border-[#222]">
+      <div class="w-full px-6 md:px-12 h-20 flex items-center justify-between">
+        <div class="flex items-center gap-3 cursor-pointer group" onclick="clearSearch()">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform overflow-hidden bg-white dark:bg-black dark:border dark:border-[#222]">
+             <img id="logo-light" src="Logo White Transparent.jpg" alt="KC" class="w-full h-full object-cover dark:hidden" onerror="this.src='https://placehold.co/100x100/ffffff/000000?text=KC'" />
+             <img id="logo-dark" src="Logo Dark Transparent.jpg" alt="KC" class="w-full h-full object-cover hidden dark:block" onerror="this.src='https://placehold.co/100x100/000000/ffffff?text=KC'" />
+          </div>
+          <h1 class="font-black text-xl tracking-tighter uppercase hidden sm:block">KENYALANG <span class="text-yellow-500">CARE</span></h1>
+          <h1 class="font-black text-xl tracking-tighter uppercase sm:hidden">K<span class="text-yellow-500">C</span></h1>
+        </div>
+        <button onclick="toggleSidebar(true)" class="p-3 rounded-2xl border transition-all hover:shadow-lg active:scale-95 bg-white border-slate-200 shadow-sm dark:bg-[#111] dark:border-[#222]">
+          <i data-lucide="menu" class="w-6 h-6 opacity-60"></i>
+        </button>
+      </div>
+    </header>
+
+    <main class="flex-grow w-full md:max-w-3xl lg:max-w-4xl mx-auto px-4 py-8 md:py-16 text-center">
+      <div id="search-container" class="relative group mb-12">
+        <i data-lucide="search" class="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-yellow-600 z-10"></i>
+        <input type="text" id="searchInput" oninput="handleSearch(this.value)" placeholder="Search" class="w-full pl-16 pr-6 py-7 rounded-3xl border-2 outline-none font-bold text-lg shadow-2xl transition-all bg-white border-slate-200 focus:border-black dark:bg-[#111] dark:border-[#222] dark:text-white dark:focus:border-white" />
+      </div>
+
+      <div id="admin-panels"></div>
+      <div id="catalog-panels"></div>
+    </main>
+
+    <footer id="footer" class="mt-24 py-20 border-t bg-white border-slate-200 dark:bg-black dark:border-[#222]">
+      <div class="w-full md:max-w-3xl mx-auto px-4 text-center">
+        <div class="flex items-center justify-center gap-12 text-[10px] font-medium opacity-60 mb-12">
+          <button onclick="toggleAboutUs(true)" class="hover:text-yellow-600 transition-all font-bold uppercase tracking-widest">about us</button>
+          <span class="opacity-10">•</span>
+          <a href="https://www.termsfeed.com/live/d6005081-c8db-4c74-a101-75a592693761" target="_blank" rel="noopener noreferrer" class="hover:text-yellow-600 transition-all font-bold uppercase tracking-widest">privacy policy</a>
+        </div>
+        <p class="text-[10px] opacity-20 uppercase font-black tracking-[0.4em]">© 2026 Kenyalang Care. Digital Sarawak Unit.</p>
+      </div>
+    </footer>
+  </div>
+
+  <!-- About Us Modal -->
+  <div id="about-modal" class="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" style="display: none;" onclick="toggleAboutUs(false)">
+    <div id="about-modal-content" class="relative w-full max-w-md rounded-[2.5rem] p-10 text-center shadow-2xl animate-in zoom-in-95 duration-300 bg-white dark:bg-[#111] dark:border-2 dark:border-[#222]" onclick="event.stopPropagation()">
+      <i data-lucide="message-square" class="w-10 h-10 text-yellow-500 mx-auto mb-6"></i>
+      <h3 class="text-2xl font-black uppercase mb-4 tracking-tighter">About us</h3>
+      <p class="text-sm opacity-80 leading-[1.6] font-medium text-justify mb-8">Kenyalang Care is the official digital services gateway for the citizens of Sarawak. Managed by the Digital Sarawak Unit, we aim to bridge the gap between government assistance and the community through high-efficiency identity verification and service accessibility.</p>
+      <button onclick="toggleAboutUs(false)" class="w-full py-4 rounded-2xl bg-black text-white dark:bg-white dark:text-black font-black uppercase tracking-[0.2em] text-xs hover:scale-105 transition-all">Close</button>
+    </div>
+  </div>
+
+  <!-- Sign Up Modal -->
+  <div id="signup-modal" class="fixed inset-0 z-[200] flex flex-col bg-white dark:bg-black animate-in fade-in overflow-y-auto smooth-scroll" style="display: none;">
+    <div class="w-full max-w-5xl mx-auto p-8 md:p-16 relative flex-grow flex flex-col text-left">
+      <button onclick="toggleSignUp(false)" class="absolute top-8 right-8 p-3 rounded-full hover:bg-slate-500/10 dark:hover:bg-[#111] transition-colors">
+        <i data-lucide="x" class="w-8 h-8 opacity-40"></i>
+      </button>
+      <div id="signup-modal-content" class="w-full flex-grow flex flex-col">
+        <!-- Signup steps injected here -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- Data Configuration ---
+    const UI_TEXT = {
+      authErrorNotFound: "Identity not recognized in system.",
+      authErrorWrongCreds: "Invalid credentials provided.",
+      signUpWarning: "Once created, core details like your Name and MyKad (IC) are locked for security purposes."
+    };
+
+    const getDevice = () => {
+      const ua = navigator.userAgent;
+      if (ua.includes('Win')) return 'Windows PC';
+      if (ua.includes('Mac')) return 'Mac OS';
+      if (ua.includes('Linux')) return 'Linux';
+      if (ua.includes('Android')) return 'Android Device';
+      if (ua.includes('like Mac OS')) return 'iOS Device';
+      return 'Unknown Device';
+    };
+
+    // Global App State
+    const state = {
+      darkMode: false,
+      searchQuery: '',
+      expandedCategoryId: null,
+      showSidebar: false,
+      sidebarAuthMode: 'menu', // 'menu', 'overview', 'edit-profile', 'status', 'security', 'report-bug', 'login', 'admin-login', 'change-password'
+      logoLight: 'Logo White Transparent.jpg',
+      logoDark: 'Logo Dark Transparent.jpg',
+      
+      citizens: [
+        {
+          id: "KC-980404135567", name: "Elvin Owen", ic: "980404-13-5567", username: "elvin13", password: "User123!", 
+          race: "Chinese", religion: "Christianity", gender: "Male", mobile: "123456789", email: "elvin@example.com",
+          securityName: "BLUE OCEAN",
+          permanentAddress: "SIBU, SARAWAK", correspondenceAddress: "JALAN JALAN DI SIBU, SARAWAK",
+          applications: [{ id: "APP-001", name: "Kenyalang Gold Card", status: "Approved", date: "26 Apr 2026" }],
+          loginHistory: [{ time: "26 Apr 2026, 14:30:00", device: "Mac OS" }]
+        }
+      ],
+      
+      admins: [{ 
+        id: "#KC130001", name: "System Administrator", email: "admin@sarawak.gov.my", password: "@Admin123!", securityName: "ROOT ACCESS",
+        mobile: "0198765432", permanentAddress: "WISMA BAPA MALAYSIA, KUCHING", correspondenceAddress: "WISMA BAPA MALAYSIA, KUCHING",
+        loginHistory: [], applications: []
+      }],
+      bugReports: [{ id: 1, desc: "Status not updating on mobile view.", screenshot: null, user: "KC-980404135567", time: "26 Apr 2026" }],
+      services: [],
+      
+      // Admin Panel UI States
+      adminActiveTab: 'citizens',
+      editingCitizenId: null,
+      
+      // Auth & Form State
+      isLoggedIn: false,
+      isAdmin: false,
+      currentUser: null,
+      matchedUser: null,
+      showPassword: false,
+      authError: null,
+      isIdentityVerified: false,
+      profileImage: null,
+      tempImage: null,
+      imageScale: 1,
+      isConfirmingPhoto: false,
+
+      // Form bindings
+      form: {
+        authIdentity: '', authPassword: '', confirmPassword: '', authSecurityName: '', authEmail: '',
+        authName: '', authUsername: '', authGender: '', authRace: '', authReligion: '',
+        mobilePhone: '', emailAddress: '', permanentAddress: '', correspondenceAddress: '',
+        bugDesc: '', bugScreen: null
+      },
+      signUpStep: 1
+    };
+
+    // Full Service Catalog Injection
+    const FullServices = [
+      { id: 1, group: "student", title: { en: "1. Aids / Bantuan for student" }, icon: "SchoolIcon", items: [
+        { en: "Aids / Bantuan for student", desc: "Online Service", link: "https://myys.yayasansarawak.org.my/student_self_registration/step_1_form.php" }
+      ]},
+      { id: 2, group: "student", title: { en: "2. Biasiswa" }, icon: "BookOpen", items: [
+        { en: "Biasiswa yayasan sarawak tun taib", desc: "Online Service", link: "http://175.138.68.197:5300/Account/UserLogin.aspx?AspxAutoDetectCookieSupport=1" },
+        { en: "Yayasan biasiswa Sarawak tunku Abdul rahman (YBSTAR)", desc: "Online Service", link: "http://175.138.68.197:5300/Account/UserLogin.aspx" },
+        { en: "Bantuan kemasukan ke IPT", desc: "Online Service", link: "http://175.138.68.197:51/iwps/Account/UserLogin.aspx" },
+        { en: "Inisiatif Graduan Pulang Sarawak (i - GPS)", desc: "Online Service", link: "http://175.138.68.197:51/iwps/Account/UserLogin.aspx" }
+      ]},
+      { id: 3, group: "student", title: { en: "3. Pinjaman" }, icon: "Calculator", items: [
+        { en: "Pinjaman", desc: "Online Service", link: "http://175.138.68.197:51/iwps/Account/UserLogin.aspx" }
+      ]},
+      { id: 4, group: "student", title: { en: "4. Program dan bantuan" }, icon: "Users", items: [
+        { en: "Biasiswa program pertukaran pelajaran", desc: "Online Service", link: "https://yayasansarawak.org.my/wp-content/uploads/2022/10/Borang-Permohonan-Pertukaran-Pelajaran-2022.pdf" }
+      ]},
+      { id: 6, group: "service", title: { en: "1. Council Service" }, icon: "Building2", items: [
+        { en: "Apply for e-Billing of Assessment Rates Bills", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/288/" },
+        { en: "Application for Form G(1)-Certificate of Clearance of Indebtedness", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/270/" },
+        { en: "Apply for Update Owner / Rate Payer Information with Local Councils", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/272/" },
+        { en: "Apply for Rebate of Assessment Rates", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/274/" },
+        { en: "Application for Transfer of Ownership of Rateable Holdings with Local Councils", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/271/" },
+        { en: "Apply for Payment of Assessment Rates by Installment", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/275/" },
+        { en: "Apply for House Numbering and Referencing of Rateable New Holding", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/276/" },
+        { en: "Application for withdrawal of caveat with Local Councils", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/273/" },
+        { en: "Apply for Remission of Rates", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/287/" }
+      ]},
+      { id: 7, group: "service", title: { en: "2. Utilities" }, icon: "Droplets", items: [
+        { en: "Online Request of Hydrological Data (Private Agency/Organization)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/609/" },
+        { en: "Change of Water Supply Account Ownership", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/293/" },
+        { en: "Online Request of Hydrological Data (Individual)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/605/" },
+        { en: "Renew Pipe Fitter licence", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/618/" },
+        { en: "Apply for Delay Payment of Outstanding Water Bill", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/303/" },
+        { en: "Request for Water Meter Replacement due to Meter Lost", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/296/" },
+        { en: "Application For New Water Supply Connection", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/289/" },
+        { en: "Request to Update Water Supply Consumer Account Information", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/312/" },
+        { en: "Online Purchase of Sarawak Hydrological Year Book (Organization)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/600/" },
+        { en: "Online Purchase of Sarawak Hydrological Year Book (Individual)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/597/" },
+        { en: "Request to Change Water Tariff Classification", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/297/" },
+        { en: "Renew Mains Layer License", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/616/" },
+        { en: "Online Request of Hydrological Data (Government Agency/Semi Governement Agency)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/602/" },
+        { en: "Apply for Mains Layer License", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/614/" },
+        { en: "Application for Import Permit for Electrical Appliances (Individual)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/341/" },
+        { en: "Apply for Relocation or Reposition of Water Meter", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/298/" },
+        { en: "Reconnection of Water Supply due to Voluntary Disconnection", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/301/" },
+        { en: "Apply for Disconnection of Water Supply Permenantly", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/290/" },
+        { en: "New application for Certificate of Competency as Cable Jointer", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/335/" },
+        { en: "Apply for Disconnection of Water Supply Temporarily", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/291/" },
+        { en: "Request to Change Water Bill Delivery to Care Off Address", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/299/" },
+        { en: "Apply for Pipe Fitter License", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/615/" },
+        { en: "Online Request of Hydrological Data (IPTA/IPTS)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/607/" },
+        { en: "Apply for Quarter's Final Water Bill", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/310/" },
+        { en: "Apply for Bekalan Elektrik Luar Bandar (BELB)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/622/" },
+        { en: "Endorsement for Certificate of Competency as a Chargeman", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/633/" },
+        { en: "Endorsement for Certificate of Registration as an Electrical Installation Contractor", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/339/" },
+        { en: "Request of Water Meter Testing", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/295/" },
+        { en: "New application for Registration Certificate as an Electrical Installation Contractor", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/501/" },
+        { en: "New application for Certificate of Competency as Competent Electrical Engineer", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/338/" },
+        { en: "New application for Certificate of Competency as an Electrical Supervisor", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/337/" },
+        { en: "Apply for Lampu Jalan Kampung (LJK)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/620/" },
+        { en: "Renewal for Certificate of Registration as an Electrical Installation Contractor", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/627/" },
+        { en: "Apply for Rural Water Supply in Sarawak", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/623/" },
+        { en: "Endorsement for Certificate of Registration as an Electrical Installation Contractor for Authorized to Test", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/630/" },
+        { en: "Apply For Adjustment And/Or Installment Of Water Bill Due To High Meter Reading", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/408/" },
+        { en: "Renewal application for Certificate of Competency as a Competent Electrical Engineer", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/512/" },
+        { en: "Endorsement for Certificate of Competency as a Competent Electrical Engineer", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/635/" },
+        { en: "Replacement for Certificate of Competency as a Chargeman", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/502/" },
+        { en: "Endorsement for Certificate of Competency as a Cable Jointer", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/624/" },
+        { en: "Application for Distribution of Gas Licence", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/831/" },
+        { en: "Replacement for Certificate of Competency as a Competent Electrical Engineer", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/513/" },
+        { en: "Renewal Certificate of Competency as an Electrical Supervisor", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/516/" },
+        { en: "Endorsement for Certificate of Competency as an Electrical Supervisor", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/519/" },
+        { en: "Replacement for Certificate of Registration as an Electrical Installation Contractor", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/498/" },
+        { en: "Renewal for Certificate of Competency as a Cable Jointer", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/507/" },
+        { en: "Replacement for Certificate of Competency as a Cable Jointer", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/508/" },
+        { en: "Application for Approval to Install (ATI) for the Gas Piping Installation", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/835/" },
+        { en: "Application for Approval to Operate (ATO) for the Gas Piping Installation", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/836/" },
+        { en: "Application for Certificate of Competency for Gas", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/832/" },
+        { en: "Application for Certificate of Registration as Gas Contractor", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/834/" },
+        { en: "Application for Certificate of Approval (COA) for Gas Fittings, Gas Appliances and Gas Equipment", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/838/" },
+        { en: "Application for Certificate of Practice for Gas", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/833/" },
+        { en: "Application for Certificate of Approval (COA) for Assembler, Manufacturer or Importer of Gas Fittings, Gas Appliances and Gas Equipment", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/837/" },
+        { en: "Application for Import Permit for Gas Fittings, Gas Appliances and Gas Equipment", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/839/" },
+        { en: "Application for Letter Of Release for Gas Fittings, Gas Appliances, and Gas Equipment", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/840/" }
+      ]},
+      { id: 8, group: "service", title: { en: "3. Business & Trade" }, icon: "Briefcase", items: [
+        { en: "Register Contractors and Consultants with UPKJ", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/714/" },
+        { en: "Sarawak Micro Credit Scheme (SMCS)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/390/" },
+        { en: "Apply for Manufacturing Permit and Industrial Lot", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/330/" },
+        { en: "Contractor and Supplier Registration, Catalogue Management, Bidding, Quotation and Tender Submission (eProcurement)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/595/" },
+        { en: "Application To Become Panel Travel Agent", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/746/" },
+        { en: "Application to become Panel Hotel", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/745/" },
+        { en: "Siting Application for Telecommunication Tower and Structures", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/740/" },
+        { en: "State e-Procurement Solution: Quotation and Tender Notices", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/751/" },
+        { en: "Application for Wayleave (Telecommunication)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/789/" },
+        { en: "Application for Rooftop Structure & In-Building System", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/749/" },
+        { en: "Application for Permit to Operate (Telecommunication)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/791/" }
+      ]},
+      { id: 9, group: "service", title: { en: "4. Hydrology" }, icon: "Droplet", items: [
+        { en: "Online Request of Hydrological Data (Private Agency/Organization)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/609/" },
+        { en: "Online Request of Hydrological Data (Individual)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/605/" },
+        { en: "Online Purchase of Sarawak Hydrological Year Book (Organization)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/600/" },
+        { en: "Online Purchase of Sarawak Hydrological Year Book (Individual)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/597/" },
+        { en: "Online Request of Hydrological Data (Government Agency/Semi Governement Agency)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/602/" },
+        { en: "Online Request of Hydrological Data (IPTA/IPTS)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/607/" }
+      ]},
+      { id: 10, group: "service", title: { en: "5. License & Permit" }, icon: "FileSearch", items: [
+        { en: "New Application for Sarawak Malaysia My Second Home (SMM2H)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/656/" },
+        { en: "Certificate of Competency as a Wireman", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/356/" },
+        { en: "Certificate of Competency as a Chargeman", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/360/" },
+        { en: "Renewal of Wireman Competency Certificate", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/357/" },
+        { en: "Renew Pipe Fitter licence", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/618/" },
+        { en: "Apply for Renewal of Chargeman Competency Certificate", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/361/" },
+        { en: "Application for SPA Qualified Person Registration", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/560/" },
+        { en: "Application for Renewal of SPA Qualified Person", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/560/" },
+        { en: "Renew Mains Layer License", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/616/" },
+        { en: "Apply for Mains Layer License", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/614/" },
+        { en: "SPA Qualified Person Certificate", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/562/" },
+        { en: "Apply for Certificate of Water Supply Products", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/347/" },
+        { en: "Apply for Pipe Fitter License", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/615/" },
+        { en: "Application for Registration of EIA Consultant (Individual Registration by Consultant Firm)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/555/" },
+        { en: "Application for Renewal of Registration of EIA Individual Consultant", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/552/" },
+        { en: "Application for Renewal of Registration of EIA Consultant Firm", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/554/" },
+        { en: "Application for Registration of EIA Consultant (Firm Registration)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/549/" },
+        { en: "Siting Application for Telecommunication Tower and Structures", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/740/" },
+        { en: "Application for Registration of EIA Consultant (Individual Member Registration)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/548/" },
+        { en: "New application for Registration Certificate as an Electrical Installation Contractor", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/501/" },
+        { en: "Apply for Registration & Appointment of Muslim Cemetery Committee", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/355/" },
+        { en: "Application for Renewal of EIA Consultant Registration (Individual Renewal by Consultant Firm)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/556/" },
+        { en: "Apply for Endorsement of Wireman", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/358/" },
+        { en: "Update Membership of Professional Bodies for SPA Qualified Person", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/565/" },
+        { en: "Apply for Certificate of Approval to Manufacture, Import, Display, Sell or Advertise Equipment", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/373/" },
+        { en: "Apply for Certificate of Registration as a Switchboard Manufacturer", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/344/" },
+        { en: "Apply for Replacement of Wireman certificate", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/359/" },
+        { en: "Update of EIA Consultant information", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/558/" },
+        { en: "Application for Rooftop Structure & In-Building System", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/749/" },
+        { en: "Application of Storage Licence for Carbon Storage", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/756/" },
+        { en: "Replacement for Certificate of Competency as an Electrical Supervisor", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/517/" },
+        { en: "Renewal of Council Operating License", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/842/" },
+        { en: "Application of Storage Permit for Carbon Storage", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/755/" },
+        { en: "Lists of Approved Licensed Mains Layer and Licensed Pipe Fitter", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/794/" },
+        { en: "Application for Change of Permanent Specialist", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/748/" },
+        { en: "Application of Storage Operator for Carbon Storage", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/754/" },
+        { en: "List of Approved Water Supply Product Certificate", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/795/" },
+        { en: "SPA Application for Planning Permission of Development of Land", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/827/" },
+        { en: "SPA Application for Siting", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/826/" },
+        { en: "Application of Licence Extension for Carbon Storage", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/829/" },
+        { en: "Application for Storage Site Management for Carbon Storage", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/830/" },
+        { en: "Application for Termination of Storage Operator", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/828/" }
+      ]},
+      { id: 11, group: "service", title: { en: "6. Life Events" }, icon: "CalendarDays", items: [
+        { en: "Apply for Senior Citizen Health Benefit (SCHB)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/742/" },
+        { en: "Apply Job with State Government", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/350/" },
+        { en: "Check Kenyalang Gold Card (KGC) Status", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/825/" },
+        { en: "Request for Permission to Get Married", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/313/" },
+        { en: "Pre Marriage Course Registration", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/314/" },
+        { en: "Native Court Sarawak: Case Status Enquiry", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/645/" },
+        { en: "Islamic Religious Enquiry", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/638/" },
+        { en: "Application for Adat Marriage Pre-Registration", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/653/" },
+        { en: "Request for Divorce Claim", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/765/" },
+        { en: "Request for Illegal Claim", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/774/" },
+        { en: "Request for Confirmation of Widow/Widower Status", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/772/" },
+        { en: "Request for Housing Rights Claim", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/763/" },
+        { en: "Request for Reference Verification", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/769/" },
+        { en: "Request for Declaration of Dissolution of Marriage Due to Religious Change", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/773/" },
+        { en: "Request for Faraq Nikah", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/775/" },
+        { en: "Request for Engagement Damages Claim", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/762/" },
+        { en: "Request for Permission to Get Married 'With a Non-Citizen Judge'", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/761/" },
+        { en: "Request for Permission to Get Married 'A Woman Who Divorced Without 'Iddah / Adorned Widow'", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/758/" },
+        { en: "Request for Confirmation of 'Iddah", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/770/" },
+        { en: "Request for Ila's Claim", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/776/" },
+        { en: "Request for Claim of Separate Property During Polygamy", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/779/" },
+        { en: "Request for Divorce Decree Confirmation Claim", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/766/" },
+        { en: "Request for Nusyuz Conviction Claim", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/764/" },
+        { en: "Request for Change of 'Iddah", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/771/" },
+        { en: "Request for Khulu' / Talaq Redemption", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/768/" },
+        { en: "Request for Refused/Deferred Guardian Claim", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/759/" },
+        { en: "Request for Legalization of Ta'liq Divorce", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/767/" },
+        { en: "Request for Tuntutan Li’an", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/778/" },
+        { en: "Request Permission to Get Married 'Being a Guardian Due to Being a Guardian in Ihram for Hajj / Umrah'", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/760/" },
+        { en: "Request for Zihar Claim", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/777/" }
+      ]},
+      { id: 12, group: "service", title: { en: "7. Social & Community" }, icon: "Heart", items: [
+        { en: "Check Status Sarawak Basic Needs Assistance (SKAS) 2026", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/821/" },
+        { en: "Application for Public Housing", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/711/" },
+        { en: "Apply for Senior Citizen Health Benefit (SCHB)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/742/" },
+        { en: "Check Eligibility Status for Senior Citizen Health Benefit (SCHB)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/741/" },
+        { en: "Apply for Bantuan Ibu Bersalin (BIB)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/383/" },
+        { en: "Check Balance for Senior Citizen Health Benefit (SCHB)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/753/" },
+        { en: "Check Clinic Panel List for Senior Citizen Health Benefit (SCHB)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/743/" },
+        { en: "Apply Job with State Government", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/350/" },
+        { en: "Admission Ticket To Museums In Sarawak Under Sarawak Museum Department", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/646/" },
+        { en: "Activate Kenyalang Gold Card (KGC)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/822/" },
+        { en: "Check Status Kenyalang Gold Card (KGC)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/825/" },
+        { en: "Apply to be Recognized as Sarawak Natives", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/744/" },
+        { en: "Admission Ticket to Sarawak's National Parks/Nature Reserves/Wildlife Centres", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/690/" },
+        { en: "Apply for Endowment Fund Sarawak (EFS)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/846/" },
+        { en: "TALIKHIDMAT", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/650/" },
+        { en: "Apply for Bantuan Ketua Isi Rumah Wanita Sarawak", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/729/" },
+        { en: "Application To Become Panel Travel Agent", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/746/" },
+        { en: "Islamic Religious Enquiry", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/638/" },
+        { en: "Apply for Bantuan Ihsan Kematian (BIK)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/847/" },
+        { en: "Apply for Kidney Patient Assistance", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/577/" },
+        { en: "Application for Taman Kekal Pengeluaran Makanan (TKPM)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/593/" },
+        { en: "Application to become Panel Hotel", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/745/" },
+        { en: "Apply for Non-Governmental Organization (NGO) Empowerment Assistance Grant", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/732/" },
+        { en: "Apply for Geran Pelancaran (GP)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/730/" },
+        { en: "Sarawak Pre-Approved Plans", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/733/" },
+        { en: "Application for Fund Assistance for Houses of Worship", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/719/" },
+        { en: "Visitor Registration - Check Status", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/575/" },
+        { en: "Profile Record Registration for Houses of Worship", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/715/" },
+        { en: "Visitor Registration", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/569/" },
+        { en: "Profile Record Update for Houses of Worship", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/716/" },
+        { en: "Report Social Issue Case", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/820/" },
+        { en: "Submission of the Project Progress Report for Fund Assistance for Houses of Worship", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/722/" },
+        { en: "Projects Change of Scope for House of Worship", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/841/" },
+        { en: "SAMUDAH Issue Submission", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/843/" },
+        { en: "LDMS Author/Publisher Registration", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/849/" },
+        { en: "LDMS Author & Publisher Dashboard", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/848/" },
+        { en: "LDMS Author & Publisher Submission", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/850/" }
+      ]},
+      { id: 13, group: "service", title: { en: "8. Land & Agriculture" }, icon: "Landmark", items: [
+        { en: "New Farmer Profile Registration", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/545/" },
+        { en: "Land Rent and Premium Enquiry and Payment", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/316/" },
+        { en: "Apply for Livestock New Schemes", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/572/" },
+        { en: "Application for Agricultural Development Program Assistance Scheme for Plantation Crop Division", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/589/" },
+        { en: "Application For New Schemes, Product Development", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/588/" },
+        { en: "Application for Taman Kekal Pengeluaran Makanan (TKPM)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/593/" },
+        { en: "Application for Agricultural Development Program Assistance Scheme for Inland Fisheries Division", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/592/" },
+        { en: "Extract of Strata Title", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/327/" },
+        { en: "Apply for Community Agriculture Development Program (CADP)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/590/" },
+        { en: "Application of e-LASIS user account", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/796/" },
+        { en: "Buy Aerial Photograph", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/321/" },
+        { en: "Check Land Application Status", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/806/" },
+        { en: "Application for Certification under Planting Materials Authentication Scheme (SPBT)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/591/" },
+        { en: "Buy Cartographic Map", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/322/" },
+        { en: "Print Out of Strata Title", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/326/" },
+        { en: "Request for Full Print Out Of Strata Title", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/328/" },
+        { en: "Application of Residential Lots at Resettlement Schemes and Kampung Extension Scheme", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/809/" },
+        { en: "Buy Orthophoto", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/320/" },
+        { en: "Renewal of Land Leases", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/807/" },
+        { en: "Application Development Program for Rice and Maize Grain", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/739/" },
+        { en: "Application of Storage Licence for Carbon Storage", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/756/" },
+        { en: "Extract of Title", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/798/" },
+        { en: "Application for Certification of Crop Scheme", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/738/" },
+        { en: "Purchase Print out of Title", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/797/" },
+        { en: "Application for Permission to Deal", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/808/" },
+        { en: "Buy Cadastral Map produced by Land and Survey Department Sarawak in hardcopy or softcopy PDF format", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/803/" },
+        { en: "Application for Miscellaneous Temporary Occupation Licence", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/810/" },
+        { en: "Land Rent and Premium Enquiry and Payment", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/800/" },
+        { en: "Full Print Out of Title", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/801/" },
+        { en: "Buy Survey Plan", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/799/" },
+        { en: "Application for Renewal of TOL Residential Lots at Resettlement Schemes and Kampung Extension Scheme", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/811/" },
+        { en: "Application for Exchange of Farm Ownership", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/736/" },
+        { en: "Application of Storage Permit for Carbon Storage", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/755/" },
+        { en: "Online Lodgement of Land Instrument", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/812/" },
+        { en: "Application for Extension of Pawah Livestock Reimbursement", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/735/" },
+        { en: "Application of Storage Operator for Carbon Storage", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/754/" },
+        { en: "Application for New Utility Survey Job", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/817/" },
+        { en: "Application for Termination of Livestock Scheme", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/737/" },
+        { en: "Application for Ownership Transfer of Crop Division’s Development Program", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/781/" },
+        { en: "Buy Cartographic Map produced by Land and Survey Department Sarawak in hardcopy or softcopy PDF format", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/804/" },
+        { en: "Application for Sales of Rock Materials and Minerals Outside of Sarawak", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/819/" },
+        { en: "Application to Transfer Permanent Food Production Park (TKPM)’s Program", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/788/" },
+        { en: "Application for Renewal as a Permanent Food Production Park (TKPM)’s Participant", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/786/" },
+        { en: "Submission of Survey Jobs", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/813/" },
+        { en: "Extraction of Survey Job", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/814/" },
+        { en: "Submission of Strata Application & Surveys", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/815/" },
+        { en: "Application for Termination of Inland Fisheries’ Development Program", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/785/" },
+        { en: "Application for Transfer of Ownership for Agrobased Industry’s Development Program", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/783/" },
+        { en: "Application for Termination of Crop Division’s Development Program", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/780/" },
+        { en: "Application for Termination of Agrobased Industry’s Development Program", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/782/" },
+        { en: "Application for Termination as a Permanent Food Production Park (TKPM)’s Participant", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/787/" },
+        { en: "Application of Monitoring of Farm Record for Inland Fisheries", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/784/" },
+        { en: "Buy Orthophoto produced or procured by Land and Survey Department Sarawak in hardcopy or softcopy PDF/ECW format.", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/805/" },
+        { en: "Buy Aerial Photograph produced by Land and Survey Department Sarawak in hardcopy or softcopy format", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/802/" },
+        { en: "Submission of Utility Survey Job", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/818/" }
+      ]},
+      { id: 14, group: "service", title: { en: "9. Education & Learning" }, icon: "SchoolIcon", items: [
+        { en: "Apply for Scholarship (Biasiswa Pinjaman Kerajaan Negeri Sarawak)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/351/" },
+        { en: "Online Request of Hydrological Data (Private Agency/Organization)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/609/" },
+        { en: "Online Request of Hydrological Data (Individual)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/605/" },
+        { en: "Search for Statutes of Sarawak", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/352/" },
+        { en: "Online Purchase of Sarawak Hydrological Year Book (Organization)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/600/" },
+        { en: "Online Purchase of Sarawak Hydrological Year Book (Individual)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/597/" },
+        { en: "Online Request of Hydrological Data (Government Agency/Semi Government Agency)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/602/" },
+        { en: "Online Request of Hydrological Data (IPTA/IPTS)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/607/" },
+        { en: "School Leavers Registration (SPEAK)", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/725/" },
+        { en: "Update School Profile [SPEAK]", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/728/" },
+        { en: "Submission of Photos for 1 Village 1 Story", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/723/" }
+      ]}
+    ];
+    state.services = FullServices;
+
+    // --- Icon Mapping ---
+    const IconMap = {
+      'GraduationCap': 'graduation-cap', 'SchoolIcon': 'graduation-cap', 'BookOpen': 'book-open',
+      'Bank': 'landmark', 'Sparkles': 'sparkles', 'ClipboardCheck': 'clipboard-check',
+      'Briefcase': 'briefcase', 'Building2': 'building-2', 'Sprout': 'sprout', 'FileText': 'file-text',
+      'Heart': 'heart', 'Users': 'users', 'UtilityPole': 'utility-pole', 'UserCog': 'user-cog',
+      'RefreshCw': 'refresh-cw', 'Palette': 'palette', 'LayoutGrid': 'layout-grid',
+      'Calculator': 'calculator', 'FileUp': 'file-up', 'Droplets': 'droplets', 'Landmark': 'landmark',
+      'Globe': 'globe', 'CalendarDays': 'calendar-days', 'FileSearch': 'file-search', 'Zap': 'zap',
+      'Gavel': 'gavel', 'Waves': 'waves', 'Smartphone': 'smartphone', 'Activity': 'activity',
+      'Bug': 'bug', 'Droplet': 'droplet', 'Edit3': 'edit-3', 'Settings': 'settings', 'Trash2': 'trash-2',
+      'Plus': 'plus', 'ChevronDown': 'chevron-down'
+    };
+    const getIcon = (name) => IconMap[name] || 'graduation-cap';
+
+    // --- Core UI Functions ---
+    function showLoader(show) {
+      document.getElementById('loader').style.display = show ? 'flex' : 'none';
+    }
+
+    function toggleSidebar(forceShow) {
+      state.showSidebar = forceShow !== undefined ? forceShow : !state.showSidebar;
+      const sidebar = document.getElementById('sidebar');
+      const backdrop = document.getElementById('sidebar-backdrop');
+      
+      if (state.showSidebar) {
+        sidebar.classList.remove('translate-x-full');
+        sidebar.classList.add('translate-x-0');
+        backdrop.classList.remove('opacity-0', 'pointer-events-none');
+        backdrop.classList.add('opacity-100', 'pointer-events-auto');
+        document.body.style.overflow = 'hidden';
+        renderSidebarContent();
+      } else {
+        sidebar.classList.add('translate-x-full');
+        sidebar.classList.remove('translate-x-0');
+        backdrop.classList.add('opacity-0', 'pointer-events-none');
+        backdrop.classList.remove('opacity-100', 'pointer-events-auto');
+        document.body.style.overflow = '';
+        setTimeout(() => changeAuthMode('menu'), 500);
+      }
+    }
+
+    function toggleTheme() {
+      state.darkMode = !state.darkMode;
+      document.documentElement.classList.toggle('dark', state.darkMode);
+      const btn = document.getElementById('theme-toggle-btn');
+      if (btn) {
+        btn.innerHTML = state.darkMode ? '<i data-lucide="sun" class="w-5 h-5 text-yellow-500"></i>' : '<i data-lucide="moon" class="w-5 h-5"></i>';
+        lucide.createIcons({root: btn});
+      }
+    }
+
+    function clearSearch() {
+      state.searchQuery = '';
+      document.getElementById('searchInput').value = '';
+      renderCatalog();
+    }
+
+    function handleSearch(val) {
+      state.searchQuery = val;
+      renderCatalog();
+    }
+
+    function toggleCategory(id) {
+      if (state.searchQuery.length > 0) return; // Prevent collapse animation during search
+      
+      const wasExpanded = state.expandedCategoryId;
+      state.expandedCategoryId = state.expandedCategoryId === id ? null : id;
+      
+      if (wasExpanded && wasExpanded !== id) {
+         updateCategoryDOM(wasExpanded, false);
+      }
+      
+      if (state.expandedCategoryId) {
+         updateCategoryDOM(id, true);
+      } else {
+         updateCategoryDOM(id, false);
+      }
+    }
+
+    function updateCategoryDOM(id, isExpanded) {
+       const container = document.getElementById(`cat-container-${id}`);
+       const iconCont = document.getElementById(`cat-icon-container-${id}`);
+       const title = document.getElementById(`cat-title-${id}`);
+       const chevron = document.getElementById(`cat-chevron-${id}`);
+       const wrapper = document.getElementById(`cat-content-wrapper-${id}`);
+       
+       if(!container || !iconCont || !title || !chevron || !wrapper) return;
+       
+       if (isExpanded) {
+          container.classList.remove('border-slate-800/10', 'dark:border-[#222]');
+          container.classList.add('border-yellow-500', 'shadow-lg');
+          iconCont.classList.remove('text-slate-500', 'dark:text-slate-400');
+          iconCont.classList.add('text-yellow-500');
+          title.classList.add('text-yellow-600');
+          chevron.classList.remove('opacity-20');
+          chevron.classList.add('rotate-180', 'text-yellow-500');
+          wrapper.classList.remove('grid-rows-[0fr]', 'opacity-0');
+          wrapper.classList.add('grid-rows-[1fr]', 'opacity-100');
+       } else {
+          container.classList.add('border-slate-800/10', 'dark:border-[#222]');
+          container.classList.remove('border-yellow-500', 'shadow-lg');
+          iconCont.classList.add('text-slate-500', 'dark:text-slate-400');
+          iconCont.classList.remove('text-yellow-500');
+          title.classList.remove('text-yellow-600');
+          chevron.classList.add('opacity-20');
+          chevron.classList.remove('rotate-180', 'text-yellow-500');
+          wrapper.classList.add('grid-rows-[0fr]', 'opacity-0');
+          wrapper.classList.remove('grid-rows-[1fr]', 'opacity-100');
+       }
+    }
+
+    function toggleAboutUs(show) {
+      document.getElementById('about-modal').style.display = show ? 'flex' : 'none';
+    }
+
+    function toggleSignUp(show) {
+      document.getElementById('signup-modal').style.display = show ? 'flex' : 'none';
+      if(show) {
+        state.signUpStep = 1;
+        state.authError = null;
+        renderSignupModal();
+      } else {
+        // Reset form
+        Object.keys(state.form).forEach(k => state.form[k] = '');
+      }
+    }
+
+    function changeAuthMode(mode) {
+      state.sidebarAuthMode = mode;
+      state.authError = null;
+      state.isIdentityVerified = false;
+      state.matchedUser = null;
+      
+      // Clear auth form inputs when navigating
+      state.form.authIdentity = '';
+      state.form.authPassword = '';
+      state.form.authEmail = '';
+      
+      renderSidebarContent();
+    }
+
+    function syncFormToState(inputId, stateKey) {
+      const el = document.getElementById(inputId);
+      if(el) state.form[stateKey] = el.value;
+    }
+
+    function handleMobileChange(input) {
+      input.value = input.value.replace(/\D/g, '').slice(0, 10);
+      state.form.mobilePhone = input.value;
+    }
+
+    function handleSignUpIdentityChange(input) {
+      let val = input.value.replace(/\D/g, '');
+      let formatted = val.substring(0, 12);
+      if (formatted.length > 6) formatted = formatted.substring(0, 6) + '-' + formatted.substring(6);
+      if (formatted.length > 9) formatted = formatted.substring(0, 9) + '-' + formatted.substring(9);
+      input.value = formatted;
+      state.form.authIdentity = formatted;
+    }
+
+    window.togglePasswordVisibility = (inputId, btnId) => {
+      const input = document.getElementById(inputId);
+      const btn = document.getElementById(btnId);
+      if (input && btn) {
+        const isPass = input.type === 'password';
+        input.type = isPass ? 'text' : 'password';
+        const iconSize = btnId.includes('su-') ? 'w-6 h-6' : 'w-5 h-5';
+        btn.innerHTML = `<i data-lucide="${isPass ? 'eye-off' : 'eye'}" class="${iconSize}"></i>`;
+        lucide.createIcons({ root: btn });
+      }
+    };
+
+    // --- Action Handlers ---
+    window.handleVerifyIdentity = (e) => {
+      e.preventDefault();
+      syncFormToState('authIdentityInput', 'authIdentity');
+      
+      showLoader(true);
+      setTimeout(() => {
+        showLoader(false);
+        if (state.sidebarAuthMode === 'admin-login') {
+          const found = state.admins.find(a => a.email.toLowerCase() === state.form.authIdentity.toLowerCase());
+          if (!found) { state.authError = UI_TEXT.authErrorNotFound; renderSidebarContent(); return; }
+          state.matchedUser = found;
+        } else {
+          const found = state.citizens.find(c => c.ic === state.form.authIdentity || c.username === state.form.authIdentity);
+          if (!found) { state.authError = UI_TEXT.authErrorNotFound; renderSidebarContent(); return; }
+          state.matchedUser = found;
+        }
+        state.isIdentityVerified = true;
+        renderSidebarContent();
+      }, 1000);
+    };
+
+    window.handleLoginSubmit = (e) => {
+      e.preventDefault();
+      syncFormToState('authIdentityInput', 'authIdentity');
+      syncFormToState('authPasswordInput', 'authPassword');
+      
+      showLoader(true);
+      setTimeout(() => {
+        showLoader(false);
+        if (state.sidebarAuthMode === 'admin-login') {
+          const admin = state.admins.find(a => a.email.toLowerCase() === state.form.authIdentity.toLowerCase() && a.password === state.form.authPassword);
+          if (admin) {
+            const loginRecord = { time: new Date().toLocaleString(), device: getDevice() };
+            admin.loginHistory = [loginRecord, ...(admin.loginHistory || [])];
+            state.isAdmin = true; state.currentUser = admin; state.isLoggedIn = true;
+            state.adminActiveTab = 'citizens';
+            toggleSidebar(false);
+            renderAdminPanels();
+            renderCatalog();
+          } else { 
+            state.authError = UI_TEXT.authErrorWrongCreds; 
+            renderSidebarContent(); 
+          }
+        } else {
+          const user = state.citizens.find(c => (c.ic === state.form.authIdentity || c.username === state.form.authIdentity) && c.password === state.form.authPassword);
+          if (user) {
+            const loginRecord = { time: new Date().toLocaleString(), device: getDevice() };
+            user.loginHistory = [loginRecord, ...(user.loginHistory || [])];
+            state.isAdmin = false; state.currentUser = user; state.isLoggedIn = true;
+            toggleSidebar(false);
+            renderCatalog();
+          } else { 
+            state.authError = UI_TEXT.authErrorWrongCreds; 
+            renderSidebarContent(); 
+          }
+        }
+      }, 1200);
+    };
+
+    window.handleLogout = () => {
+      showLoader(true);
+      toggleSidebar(false);
+      setTimeout(() => {
+        state.isLoggedIn = false; state.isAdmin = false; state.currentUser = null; state.profileImage = null;
+        changeAuthMode('menu');
+        renderAdminPanels();
+        renderCatalog();
+        showLoader(false);
+      }, 1200);
+    };
+
+    window.handleUpdateProfile = () => {
+      syncFormToState('profileMobile', 'mobilePhone');
+      syncFormToState('profileEmail', 'emailAddress');
+      syncFormToState('profilePerm', 'permanentAddress');
+      syncFormToState('profileCorr', 'correspondenceAddress');
+
+      if (!state.form.mobilePhone || !state.form.permanentAddress || !state.form.correspondenceAddress) {
+        state.authError = "Mobile and Addresses cannot be empty.";
+        renderSidebarContent(); return;
+      }
+      
+      state.currentUser.mobile = state.form.mobilePhone;
+      if (state.form.emailAddress) state.currentUser.email = state.form.emailAddress;
+      state.currentUser.permanentAddress = state.form.permanentAddress;
+      state.currentUser.correspondenceAddress = state.form.correspondenceAddress;
+
+      state.authError = "Profile updated successfully!";
+      renderSidebarContent();
+      setTimeout(() => { changeAuthMode('overview'); }, 1500);
+    };
+
+    window.handleChangePassword = () => {
+      syncFormToState('cpNewPass', 'authPassword');
+      syncFormToState('cpConfPass', 'confirmPassword');
+      
+      if (!state.form.authPassword) {
+        state.authError = "Password cannot be empty."; renderSidebarContent(); return;
+      }
+      const regex = /^(?=.[a-z])(?=.[A-Z])(?=.\d)(?=.[@$!%?&_#-])[A-Za-z\d@$!%?&_#-]{8,}$/;
+      if (!regex.test(state.form.authPassword)) { state.authError = "New password does not meet requirements."; renderSidebarContent(); return; }
+      if (state.form.authPassword !== state.form.confirmPassword) { state.authError = "Passwords mismatch."; renderSidebarContent(); return; }
+      
+      state.currentUser.password = state.form.authPassword;
+      state.authError = "Password updated successfully!";
+      state.form.authPassword = ''; state.form.confirmPassword = '';
+      renderSidebarContent();
+      setTimeout(() => { changeAuthMode('overview'); }, 1500);
+    };
+
+    window.handleSignupSubmit = (e) => {
+      e.preventDefault();
+      
+      if (state.signUpStep === 1) {
+        syncFormToState('suName', 'authName'); syncFormToState('suRace', 'authRace'); syncFormToState('suReligion', 'authReligion');
+        syncFormToState('suGender', 'authGender'); syncFormToState('suUser', 'authUsername'); syncFormToState('suEmail', 'emailAddress');
+        syncFormToState('suPerm', 'permanentAddress'); syncFormToState('suCorr', 'correspondenceAddress');
+
+        if (!state.form.authName || !state.form.authIdentity || !state.form.authRace || !state.form.authReligion || !state.form.authGender || !state.form.authUsername || !state.form.mobilePhone || !state.form.emailAddress || !state.form.permanentAddress || !state.form.correspondenceAddress) {
+          state.authError = "Please fill in all details to proceed.";
+          renderSignupModal(); return;
+        }
+        if (state.form.mobilePhone.length < 8) { state.authError = "Invalid mobile."; renderSignupModal(); return; }
+        state.authError = null; state.signUpStep = 2; renderSignupModal(); return;
+      }
+      
+      if (state.signUpStep === 2) {
+        syncFormToState('suPass', 'authPassword'); syncFormToState('suConf', 'confirmPassword'); syncFormToState('suSecName', 'authSecurityName');
+        if (!state.form.authSecurityName) { state.authError = "Security phrase is required."; renderSignupModal(); return; }
+        const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&_#-])[A-Za-z\d@$!%*?&_#-]{8,}$/;
+        if (!regex.test(state.form.authPassword)) { state.authError = "Requirements: 8+ chars, upper, lower, number, symbol."; renderSignupModal(); return; }
+        if (state.form.authPassword !== state.form.confirmPassword) { state.authError = "Passwords mismatch."; renderSignupModal(); return; }
+        state.authError = null; state.signUpStep = 3; renderSignupModal(); return;
+      }
+      
+      if (state.signUpStep === 3) {
+        showLoader(true);
+        setTimeout(() => {
+          const newCit = { 
+            ic: state.form.authIdentity, name: state.form.authName, username: state.form.authUsername, password: state.form.authPassword, 
+            race: state.form.authRace, religion: state.form.authReligion, gender: state.form.authGender, 
+            permanentAddress: state.form.permanentAddress, correspondenceAddress: state.form.correspondenceAddress, 
+            mobile: state.form.mobilePhone, email: state.form.emailAddress, securityName: state.form.authSecurityName,
+            applications: [], loginHistory: [{ time: new Date().toLocaleString(), device: getDevice() }] 
+          };
+          state.citizens.push(newCit);
+          state.currentUser = newCit; state.isLoggedIn = true;
+          showLoader(false); toggleSignUp(false);
+          renderCatalog();
+        }, 1500);
+      }
+    };
+
+    window.triggerBugAnimation = () => { changeAuthMode('report-bug'); };
+    window.submitBug = () => {
+      syncFormToState('bugInputArea', 'bugDesc');
+      if (!state.form.bugDesc) return;
+      const newBug = {
+        id: Date.now(), desc: state.form.bugDesc, screenshot: state.form.bugScreen, 
+        user: state.currentUser ? state.currentUser.ic : "Guest", time: new Date().toLocaleString()
+      };
+      state.bugReports.unshift(newBug);
+      state.form.bugDesc = ''; state.form.bugScreen = null;
+      changeAuthMode('menu');
+      if(state.isAdmin) renderAdminPanels();
+    };
+
+    window.handleBugScreenshot = (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onloadend = () => { state.form.bugScreen = reader.result; renderSidebarContent(); };
+        reader.readAsDataURL(file);
+      }
+    };
+
+    window.handleImageUpload = (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onloadend = () => { state.tempImage = reader.result; state.imageScale = 1; state.isConfirmingPhoto = true; renderSidebarContent(); };
+        reader.readAsDataURL(file);
+      }
+    };
+    window.handleConfirmPhoto = () => { 
+      if (state.currentUser) {
+        state.currentUser.profileImage = state.tempImage;
+        state.currentUser.imageScale = state.imageScale;
+      }
+      state.tempImage = null; 
+      state.isConfirmingPhoto = false; 
+      renderSidebarContent(); 
+    };
+    window.handleCancelPhoto = () => { state.tempImage = null; state.isConfirmingPhoto = false; renderSidebarContent(); };
+    
+    // Direct DOM manipulation prevents the entire sidebar from re-rendering/flickering
+    window.updateImageScale = (val) => { 
+      state.imageScale = parseFloat(val); 
+      const preview = document.getElementById('avatarPreview');
+      if(preview) preview.style.transform = `scale(${val})`; 
+    };
+
+    window.openImageModal = (src) => {
+      document.getElementById('image-modal-img').src = src;
+      document.getElementById('image-modal').style.display = 'flex';
+    };
+
+    // --- Admin Actions ---
+    window.setAdminTab = (tab) => { 
+      state.adminActiveTab = tab; 
+      renderAdminPanels(); 
+    };
+
+    window.startEditCitizen = (ic) => { 
+      state.editingCitizenId = ic; 
+      renderAdminPanels(); 
+    };
+    
+    window.cancelCitizenEdit = () => { 
+      state.editingCitizenId = null; 
+      renderAdminPanels(); 
+    };
+    
+    window.saveCitizenEdit = (ic) => {
+      const c = state.citizens.find(cit => cit.ic === ic);
+      if (c) {
+        c.name = document.getElementById('edit-cit-name').value;
+        c.race = document.getElementById('edit-cit-race').value;
+        c.religion = document.getElementById('edit-cit-religion').value;
+      }
+      state.editingCitizenId = null;
+      renderAdminPanels();
+    };
+
+    window.switchAppStatus = (ic, appId, newStatus) => {
+      const c = state.citizens.find(cit => cit.ic === ic);
+      if(c) {
+        const app = c.applications.find(a => a.id === appId);
+        if(app) {
+          app.status = newStatus;
+          renderAdminPanels();
+        }
+      }
+    };
+    window.handleEditCategory = (id) => {
+      const cat = state.services.find(s => s.id === id); const next = prompt("Rename:", cat.title.en);
+      if (next) { cat.title.en = next; renderAdminPanels(); renderCatalog(); }
+    };
+    window.handleAddItem = (catId) => {
+      const cat = state.services.find(s => s.id === catId);
+      const n = prompt("Name:"); const d = prompt("Desc:"); const l = prompt("URL (# for empty):");
+      if (n && d) { cat.items.push({ en: n, desc: d, link: l || "#" }); renderAdminPanels(); renderCatalog(); }
+    };
+    window.handleEditItem = (catId, idx) => {
+      const item = state.services.find(c => c.id === catId).items[idx];
+      const nN = prompt("Name:", item.en); const nD = prompt("Desc:", item.desc); const nL = prompt("URL:", item.link);
+      if (nN && nD) { item.en = nN; item.desc = nD; item.link = nL || "#"; renderAdminPanels(); renderCatalog(); }
+    };
+    window.handleAddNewCategory = () => {
+      const n = prompt("Title:"); if (n) { state.services.push({ id: Date.now(), title: { en: n }, icon: "LayoutGrid", items: [] }); renderAdminPanels(); renderCatalog(); }
+    };
+    window.handleDeleteItem = (catId, idx) => {
+      if (confirm("Remove?")) { state.services.find(c => c.id === catId).items.splice(idx, 1); renderAdminPanels(); renderCatalog(); }
+    };
+    
+    window.handleLogoUpload = (e, type) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          if (type === 'light') {
+            state.logoLight = reader.result;
+            document.getElementById('logo-light').src = state.logoLight;
+          } else {
+            state.logoDark = reader.result;
+            document.getElementById('logo-dark').src = state.logoDark;
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+
+    window.resolveBug = (id) => { state.bugReports = state.bugReports.filter(b => b.id !== id); renderAdminPanels(); };
+
+    // --- Render Functions ---
+    function renderSidebarContent() {
+      const content = document.getElementById('sidebar-content');
+      const footer = document.getElementById('sidebar-footer');
+      
+      const backBtnHtml = `
+        <button onclick="changeAuthMode('menu')" class="text-[10px] font-black uppercase opacity-40 hover:opacity-100 flex items-center gap-1 mb-6 transition-all">
+          <i data-lucide="chevron-left" class="w-4 h-4"></i> Back to Menu
+        </button>
+      `;
+
+      let html = '';
+      
+      if (state.sidebarAuthMode === 'menu') {
+        html = `
+          <div class="space-y-10 animate-in fade-in zoom-in-95">
+             ${(state.isLoggedIn || state.isConfirmingPhoto) ? `
+             <div class="flex flex-col items-center">
+                ${state.isConfirmingPhoto ? `
+                  <div class="flex flex-col items-center animate-in zoom-in-95 w-full">
+                     <h4 class="font-black text-xs uppercase opacity-40 mb-4 tracking-widest">Adjust Photo</h4>
+                     <div class="w-28 h-28 rounded-[2.5rem] flex items-center justify-center shadow-2xl overflow-hidden border-4 border-yellow-500 mb-6 bg-slate-500/10">
+                        <img id="avatarPreview" src="${state.tempImage}" class="w-full h-full object-cover" style="transform: scale(${state.imageScale})" alt="Preview" />
+                     </div>
+                     <input type="range" min="0.5" max="3" step="0.01" value="${state.imageScale}" oninput="updateImageScale(this.value)" class="w-full accent-yellow-500 mb-6 max-w-[200px]" />
+                     <div class="flex gap-2 w-full max-w-[200px]">
+                        <button onclick="handleCancelPhoto()" class="flex-grow py-3 rounded-xl bg-slate-500/10 text-[9px] font-black uppercase hover:bg-slate-500/20 transition-all">Cancel</button>
+                        <button onclick="handleConfirmPhoto()" class="flex-grow py-3 rounded-xl bg-yellow-500 text-black text-[9px] font-black uppercase font-bold hover:scale-105 transition-all shadow-lg">Apply</button>
+                     </div>
+                  </div>
+                ` : `
+                  <div class="relative group">
+                     <div class="w-28 h-28 rounded-[2.5rem] flex items-center justify-center shadow-2xl overflow-hidden bg-slate-500/10 border-4 ${state.darkMode ? 'border-[#222]' : 'border-white'}">
+                        ${state.currentUser && state.currentUser.profileImage 
+                          ? `<img src="${state.currentUser.profileImage}" style="transform: scale(${state.currentUser.imageScale || 1})" class="w-full h-full object-cover" alt="Avatar" />` 
+                          : `<i data-lucide="user" class="w-14 h-14 text-slate-400"></i>`}
+                     </div>
+                     <button onclick="document.getElementById('avatarUpload').click()" class="absolute -bottom-2 -right-2 p-3 rounded-2xl bg-yellow-500 text-black shadow-lg transform hover:scale-110 active:scale-95 transition-all"><i data-lucide="camera" class="w-5 h-5"></i></button>
+                     <input type="file" id="avatarUpload" class="hidden" accept="image/*" onchange="handleImageUpload(event)" />
+                  </div>
+                  <div class="mt-6">
+                     <h4 class="font-black uppercase tracking-tighter text-2xl leading-tight">${state.currentUser.name}</h4>
+                     ${!state.isAdmin ? `<p class="text-[10px] font-bold opacity-30 mt-3 tracking-widest uppercase text-center">ID: KC-${state.currentUser.ic.replace(/-/g,'')}</p>` : `<p class="text-[10px] font-bold opacity-30 mt-3 tracking-widest uppercase text-center">ID: ${state.currentUser.id}</p>`}
+                     ${state.isAdmin ? `<p class="text-[10px] font-black text-purple-500 mt-2 tracking-widest uppercase text-center">Admin Hub Active</p>` : ''}
+                  </div>
+                `}
+             </div>
+             ` : ''}
+
+             ${!state.isLoggedIn && !state.isConfirmingPhoto ? `
+               <div class="space-y-3">
+                  <button onclick="changeAuthMode('login')" class="w-full py-5 rounded-3xl bg-black text-white dark:bg-white dark:text-black font-black uppercase text-xs tracking-widest shadow-xl transition-transform active:scale-95">Log In</button>
+                  <button onclick="toggleSignUp(true); toggleSidebar(false);" class="w-full py-5 rounded-3xl border-2 border-slate-500/20 dark:border-[#333] font-black uppercase text-xs tracking-widest hover:bg-slate-500/5 transition-all">Sign Up</button>
+               </div>
+             ` : ''}
+
+             ${state.isLoggedIn && !state.isConfirmingPhoto ? `
+               <div class="space-y-2 text-left mt-6">
+                  <button onclick="
+                    state.form.mobilePhone = state.currentUser.mobile || '';
+                    state.form.emailAddress = state.currentUser.email || '';
+                    state.form.permanentAddress = state.currentUser.permanentAddress || '';
+                    state.form.correspondenceAddress = state.currentUser.correspondenceAddress || '';
+                    state.form.authPassword = ''; state.form.confirmPassword = '';
+                    changeAuthMode('overview');
+                  " class="w-full flex items-center gap-4 p-5 rounded-2xl bg-slate-500/5 font-black text-sm transition-all hover:bg-yellow-500/10"><i data-lucide="fingerprint" class="w-5 h-5 opacity-40"></i> My Profile</button>
+                  <button onclick="changeAuthMode('status')" class="w-full flex items-center gap-4 p-5 rounded-2xl bg-slate-500/5 font-black text-sm transition-all hover:bg-yellow-500/10"><i data-lucide="clock" class="w-5 h-5 opacity-40"></i> Track Status</button>
+                  <button onclick="changeAuthMode('security')" class="w-full flex items-center gap-4 p-5 rounded-2xl bg-slate-500/5 font-black text-sm transition-all hover:bg-yellow-500/10"><i data-lucide="shield-alert" class="w-5 h-5 opacity-40"></i> Security</button>
+               </div>
+             ` : ''}
+          </div>
+        `;
+        
+        if (!state.isConfirmingPhoto) {
+          footer.innerHTML = `
+            <button onclick="triggerBugAnimation()" class="w-full py-4 rounded-2xl border border-red-500/20 text-red-500 font-black text-[10px] uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all">Report Bug</button>
+            ${!state.isLoggedIn ? `<button onclick="changeAuthMode('admin-login')" class="w-full py-3 text-[10px] font-black uppercase opacity-20 hover:opacity-100 hover:text-purple-500 transition-all text-xs">Hey Admin</button>` : ''}
+            ${state.isLoggedIn ? `<button onclick="handleLogout()" class="w-full flex items-center justify-center gap-4 p-5 text-red-500 font-black text-sm hover:bg-red-500/10 rounded-3xl transition-all active:scale-95"><i data-lucide="log-out" class="w-5 h-5"></i> Sign Out</button>` : ''}
+          `;
+          footer.style.display = 'block';
+        } else {
+          footer.style.display = 'none';
+        }
+      } 
+      else if (state.sidebarAuthMode === 'overview') {
+        const detailsList = state.isAdmin ? [
+          { l: 'Employee ID', v: state.currentUser?.id }, 
+          { l: 'Name', v: state.currentUser?.name }, 
+          { l: 'Role', v: 'System Administrator' },
+          { l: 'Security Phrase', v: state.currentUser?.securityName }
+        ] : [
+          { l: 'MyKad', v: state.currentUser?.ic }, 
+          { l: 'Name', v: state.currentUser?.name }, 
+          { l: 'Race', v: state.currentUser?.race }, 
+          { l: 'Religion', v: state.currentUser?.religion },
+          { l: 'Security Phrase', v: state.currentUser?.securityName }
+        ];
+
+        html = `
+          <div class="animate-in slide-in-from-right-4 text-left">
+             ${backBtnHtml}
+             <h4 class="font-black uppercase text-2xl mb-8">My Profile</h4>
+             ${state.authError ? `<div class="mb-6 p-4 rounded-2xl ${state.authError.includes('successfully') ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'} text-[10px] font-black uppercase flex items-center gap-3 animate-shake"><i data-lucide="${state.authError.includes('successfully') ? 'check' : 'alert-triangle'}" class="w-4 h-4"></i> ${state.authError}</div>` : ''}
+             
+             <div class="space-y-4">
+                <h5 class="text-[10px] font-black uppercase opacity-20 tracking-widest border-b border-slate-500/10 dark:border-[#333] pb-2">Personal Details</h5>
+                ${detailsList.map(f => `
+                  <div class="p-4 rounded-2xl bg-slate-500/5 opacity-80"><p class="text-[9px] font-bold opacity-40 uppercase">${f.l}</p><p class="font-black text-xs">${f.v || 'N/A'}</p></div>
+                `).join('')}
+                
+                <h5 class="text-[10px] font-black uppercase opacity-20 tracking-widest border-b border-slate-500/10 dark:border-[#333] pb-2 mt-8">Contact & Address</h5>
+                <div class="p-4 rounded-2xl bg-slate-500/5 opacity-80"><p class="text-[9px] font-bold opacity-40 uppercase">Mobile (+60)</p><p class="font-black text-xs">${state.currentUser?.mobile || 'N/A'}</p></div>
+                <div class="p-4 rounded-2xl bg-slate-500/5 opacity-80"><p class="text-[9px] font-bold opacity-40 uppercase">Email Address</p><p class="font-black text-xs">${state.currentUser?.email || 'N/A'}</p></div>
+                <div class="p-4 rounded-2xl bg-slate-500/5 opacity-80"><p class="text-[9px] font-bold opacity-40 uppercase">Permanent Address</p><p class="font-black text-xs">${state.currentUser?.permanentAddress || 'N/A'}</p></div>
+                <div class="p-4 rounded-2xl bg-slate-500/5 opacity-80"><p class="text-[9px] font-bold opacity-40 uppercase">Correspondence Address</p><p class="font-black text-xs">${state.currentUser?.correspondenceAddress || 'N/A'}</p></div>
+
+                <button onclick="changeAuthMode('edit-profile')" class="w-full py-5 rounded-3xl bg-yellow-500 text-black font-black uppercase text-xs tracking-widest shadow-xl mt-6 active:scale-95 transition-transform">Edit Profile</button>
+                <button onclick="changeAuthMode('change-password')" class="w-full py-5 rounded-3xl bg-slate-500/10 dark:bg-[#222] font-black uppercase text-xs tracking-widest mt-4 hover:bg-slate-500/20 dark:hover:bg-[#333] transition-all">Change Password</button>
+             </div>
+          </div>
+        `;
+        footer.style.display = 'none';
+      }
+      else if (state.sidebarAuthMode === 'edit-profile') {
+        html = `
+          <div class="animate-in slide-in-from-right-4 text-left">
+             ${backBtnHtml}
+             <div class="flex items-center gap-3 mb-8"><i data-lucide="edit-3" class="text-yellow-500 w-8 h-8"></i><h4 class="font-black uppercase text-2xl">Edit Profile</h4></div>
+             ${state.authError ? `<div class="mb-6 p-4 rounded-2xl bg-red-500/10 text-red-500 text-[10px] font-black uppercase flex items-center gap-3 animate-shake"><i data-lucide="alert-triangle" class="w-4 h-4"></i> ${state.authError}</div>` : ''}
+             
+             <div class="space-y-4">
+                <div class="space-y-2"><label class="text-[10px] font-black uppercase opacity-40 ml-1">Mobile (+60)</label><input type="text" id="profileMobile" value="${state.form.mobilePhone}" oninput="handleMobileChange(this)" class="w-full p-4 rounded-2xl border-2 border-slate-500/20 dark:border-[#333] font-black outline-none bg-transparent focus:border-yellow-500" /></div>
+                <div class="space-y-2"><label class="text-[10px] font-black uppercase opacity-40 ml-1">Email Address</label><input type="email" id="profileEmail" value="${state.form.emailAddress}" oninput="state.form.emailAddress = this.value" class="w-full p-4 rounded-2xl border-2 border-slate-500/20 dark:border-[#333] font-black outline-none bg-transparent focus:border-yellow-500" /></div>
+                <div class="space-y-2"><label class="text-[10px] font-black uppercase opacity-40 ml-1">Permanent Address</label><textarea id="profilePerm" rows="2" oninput="state.form.permanentAddress = this.value" class="w-full p-4 rounded-2xl border-2 border-slate-500/20 dark:border-[#333] font-black outline-none bg-transparent focus:border-yellow-500 resize-none">${state.form.permanentAddress}</textarea></div>
+                <div class="space-y-2"><label class="text-[10px] font-black uppercase opacity-40 ml-1">Correspondence Address</label><textarea id="profileCorr" rows="2" oninput="state.form.correspondenceAddress = this.value" class="w-full p-4 rounded-2xl border-2 border-slate-500/20 dark:border-[#333] font-black outline-none bg-transparent focus:border-yellow-500 resize-none">${state.form.correspondenceAddress}</textarea></div>
+
+                <button onclick="handleUpdateProfile()" class="w-full py-5 rounded-3xl bg-yellow-500 text-black font-black uppercase text-xs tracking-widest shadow-xl mt-8 active:scale-95 transition-transform">Save Changes</button>
+             </div>
+          </div>
+        `;
+        footer.style.display = 'none';
+      }
+      else if (state.sidebarAuthMode === 'change-password') {
+        html = `
+          <div class="animate-in slide-in-from-right-4 text-left">
+             ${backBtnHtml}
+             <div class="flex items-center gap-3 mb-8"><i data-lucide="lock" class="text-yellow-500 w-8 h-8"></i><h4 class="font-black uppercase text-2xl">Security</h4></div>
+             ${state.authError ? `<div class="mb-6 p-4 rounded-2xl ${state.authError.includes('successfully') ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'} text-[10px] font-black uppercase flex items-center gap-3 animate-shake"><i data-lucide="${state.authError.includes('successfully') ? 'check' : 'alert-triangle'}" class="w-4 h-4"></i> ${state.authError}</div>` : ''}
+             
+             <div class="space-y-4">
+                <div class="space-y-2">
+                  <label class="text-[10px] font-black uppercase opacity-40 ml-1">New Password</label>
+                  <div class="relative">
+                    <input type="password" id="cpNewPass" oninput="state.form.authPassword = this.value" value="${state.form.authPassword}" class="w-full p-5 pr-12 rounded-2xl border-2 border-slate-500/20 dark:border-[#333] font-black outline-none bg-transparent focus:border-yellow-500" />
+                    <button type="button" id="btn-cp-new" onclick="togglePasswordVisibility('cpNewPass', 'btn-cp-new')" class="absolute right-4 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-100 transition-opacity">
+                       <i data-lucide="eye" class="w-5 h-5"></i>
+                    </button>
+                  </div>
+                </div>
+                
+                <div class="space-y-2">
+                  <label class="text-[10px] font-black uppercase opacity-40 ml-1">Confirm New Password</label>
+                  <div class="relative">
+                    <input type="password" id="cpConfPass" oninput="state.form.confirmPassword = this.value" value="${state.form.confirmPassword}" class="w-full p-5 pr-12 rounded-2xl border-2 border-slate-500/20 dark:border-[#333] font-black outline-none bg-transparent focus:border-yellow-500" />
+                    <button type="button" id="btn-cp-conf" onclick="togglePasswordVisibility('cpConfPass', 'btn-cp-conf')" class="absolute right-4 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-100 transition-opacity">
+                       <i data-lucide="eye" class="w-5 h-5"></i>
+                    </button>
+                  </div>
+                </div>
+                
+                <p class="text-[9px] opacity-40 italic px-2">Must be 8+ characters, include upper/lowercase, number, and symbol.</p>
+
+                <button onclick="handleChangePassword()" class="w-full py-5 rounded-3xl bg-yellow-500 text-black font-black uppercase text-xs tracking-widest shadow-xl mt-8 active:scale-95 transition-transform">Update Password</button>
+             </div>
+          </div>
+        `;
+        footer.style.display = 'none';
+      }
+      else if (state.sidebarAuthMode === 'status') {
+        html = `
+          <div class="animate-in slide-in-from-right-4 text-left">
+             ${backBtnHtml}
+             <h4 class="font-black uppercase text-2xl mb-8">Track Status</h4>
+             <div class="space-y-4">
+                ${state.currentUser?.applications?.map(app => `
+                  <div class="p-4 rounded-2xl bg-slate-500/5">
+                    <p class="font-black text-[11px] uppercase">${app.name}</p>
+                    <div class="flex justify-between items-center mt-3">
+                       <span class="px-2 py-1 rounded-lg text-[9px] font-black text-white uppercase ${app.status === 'Approved' ? 'bg-green-500' : app.status === 'Rejected' ? 'bg-red-500' : 'bg-yellow-500'}">${app.status}</span>
+                       <span class="text-[9px] font-bold opacity-40">${app.date}</span>
+                    </div>
+                  </div>
+                `).join('') || ''}
+                ${(!state.currentUser?.applications || state.currentUser?.applications.length === 0) ? `<p class="text-xs opacity-40 text-center">No applications found.</p>` : ''}
+             </div>
+          </div>
+        `;
+        footer.style.display = 'none';
+      }
+      else if (state.sidebarAuthMode === 'security') {
+        html = `
+          <div class="animate-in slide-in-from-right-4 text-left">
+             ${backBtnHtml}
+             <div class="flex items-center gap-3 mb-8"><i data-lucide="shield" class="text-yellow-500 w-8 h-8"></i><h4 class="font-black uppercase text-2xl">Security</h4></div>
+             <h5 class="text-[10px] font-black uppercase opacity-20 tracking-widest border-b border-slate-500/10 pb-2 mb-4">Login History</h5>
+             <div class="space-y-3">
+                ${state.currentUser?.loginHistory?.map(log => `
+                  <div class="p-4 rounded-2xl bg-slate-500/5 flex flex-col gap-1">
+                     <span class="text-[11px] font-black">${log.device}</span>
+                     <span class="text-[9px] font-bold opacity-40">${log.time}</span>
+                  </div>
+                `).join('') || ''}
+                ${(!state.currentUser?.loginHistory || state.currentUser?.loginHistory.length === 0) ? `<p class="text-xs opacity-40 text-center">No history available.</p>` : ''}
+             </div>
+          </div>
+        `;
+        footer.style.display = 'none';
+      }
+      else if (state.sidebarAuthMode === 'report-bug') {
+        html = `
+          <div class="animate-in slide-in-from-right-4 text-left space-y-6">
+             ${backBtnHtml}
+             <h4 class="font-black uppercase text-2xl mb-4">Report Issue</h4>
+             <div class="space-y-2"><label class="text-[10px] font-black uppercase opacity-40 px-1">Describe Issue</label><textarea id="bugInputArea" rows="5" oninput="state.form.bugDesc = this.value" class="w-full p-5 rounded-2xl border-2 border-slate-500/20 dark:border-[#333] font-medium bg-transparent outline-none focus:border-red-500/50">${state.form.bugDesc}</textarea></div>
+             <div class="space-y-2">
+               <label class="text-[10px] font-black uppercase opacity-40 px-1">Screenshot</label>
+               <div onclick="document.getElementById('bugImgUpload').click()" class="w-full p-8 rounded-2xl border-2 border-slate-500/20 dark:border-[#333] border-dashed flex flex-col items-center justify-center cursor-pointer">
+                 ${state.form.bugScreen ? `<img src="${state.form.bugScreen}" class="h-24 rounded-lg" alt="P" />` : `<i data-lucide="image" class="w-8 h-8 opacity-20"></i>`}
+               </div>
+               <input type="file" id="bugImgUpload" class="hidden" accept="image/*" onchange="handleBugScreenshot(event)" />
+             </div>
+             <button onclick="submitBug()" class="w-full py-5 rounded-3xl bg-red-600 text-white font-black uppercase tracking-widest shadow-xl active:scale-95">Submit Report</button>
+          </div>
+        `;
+        footer.style.display = 'none';
+      }
+      else if (state.sidebarAuthMode === 'login' || state.sidebarAuthMode === 'admin-login') {
+        html = `
+          <div class="animate-in slide-in-from-right-4 text-left">
+             ${backBtnHtml}
+             <h4 class="font-black uppercase text-2xl mb-8">${state.sidebarAuthMode === 'login' ? 'User Access' : 'Admin Unlock'}</h4>
+             ${state.authError ? `<div class="mb-6 p-4 rounded-2xl bg-red-500/10 text-red-500 text-[10px] font-black uppercase flex items-center gap-3 animate-shake"><i data-lucide="alert-triangle" class="w-4 h-4"></i> ${state.authError}</div>` : ''}
+             <form onsubmit="${state.isIdentityVerified ? 'handleLoginSubmit(event)' : 'handleVerifyIdentity(event)'}" class="space-y-6">
+                <div class="space-y-2">
+                  <label class="text-[10px] font-black uppercase opacity-40 px-1">${state.sidebarAuthMode === 'login' ? 'Identity ID or Username' : 'Registered Email'}</label>
+                  <input type="text" id="authIdentityInput" value="${state.form.authIdentity}" oninput="state.form.authIdentity = this.value; if(state.authError || state.isIdentityVerified) { state.authError=null; state.isIdentityVerified=false; state.matchedUser=null; renderSidebarContent(); setTimeout(() => { const el = document.getElementById('authIdentityInput'); if(el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); } }, 0); }" class="w-full p-5 rounded-2xl border-2 border-slate-500/20 dark:border-[#333] font-black outline-none bg-transparent ${state.isIdentityVerified ? 'border-green-500/40' : 'focus:border-black dark:focus:border-white'}" />
+                </div>
+                ${state.isIdentityVerified && state.matchedUser ? `
+                  <div class="animate-in slide-in-from-top-4 space-y-6">
+                    <div class="p-5 rounded-2xl bg-yellow-500/10 border-2 border-yellow-500 text-center shadow-inner">
+                       <p class="text-[9px] font-black uppercase opacity-40 mb-1 text-yellow-700 dark:text-yellow-400">Security Phrase</p>
+                       <p class="font-black text-xl text-yellow-600 dark:text-yellow-500 tracking-wider">"${state.matchedUser.securityName || 'N/A'}"</p>
+                       <p class="text-[9px] font-bold opacity-50 mt-2 uppercase text-yellow-700 dark:text-yellow-400">Is this your exact security phrase?</p>
+                    </div>
+
+                    <div class="space-y-2">
+                      <label class="text-[10px] font-black uppercase opacity-40 px-1">Password</label>
+                      <div class="relative">
+                        <input type="password" id="authPasswordInput" value="${state.form.authPassword}" oninput="state.form.authPassword = this.value" class="w-full p-5 pr-12 rounded-2xl border-2 border-slate-500/20 dark:border-[#333] font-black outline-none bg-transparent focus:border-black dark:focus:border-white" />
+                        <button type="button" id="btn-login-pass" onclick="togglePasswordVisibility('authPasswordInput', 'btn-login-pass')" class="absolute right-4 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-100 transition-opacity">
+                           <i data-lucide="eye" class="w-5 h-5"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ` : ''}
+                <button type="submit" class="w-full py-5 rounded-3xl text-white font-black uppercase tracking-widest shadow-xl transition-all active:scale-95 ${state.sidebarAuthMode === 'login' ? 'bg-black dark:bg-white dark:text-black' : 'bg-purple-600'}">
+                  ${state.isIdentityVerified ? 'Access Portal' : 'Verify ID'}
+                </button>
+             </form>
+          </div>
+        `;
+        footer.style.display = 'none';
+      }
+
+      content.innerHTML = html;
+      lucide.createIcons();
+    }
+
+    function renderAdminPanels() {
+      const container = document.getElementById('admin-panels');
+      if (!state.isLoggedIn || !state.isAdmin) {
+        container.innerHTML = '';
+        return;
+      }
+
+      const filteredCitizens = state.citizens;
+
+      let html = `
+        <div class="flex gap-4 mb-8 overflow-x-auto scrollbar-hide pb-2 smooth-scroll w-full">
+           <button onclick="setAdminTab('citizens')" class="flex-1 px-6 py-4 rounded-3xl font-black uppercase text-xs transition-all whitespace-nowrap ${state.adminActiveTab === 'citizens' ? 'bg-purple-600 text-white shadow-xl border-purple-600' : 'bg-white dark:bg-[#111] text-purple-600 hover:bg-purple-50 dark:hover:bg-[#222] border border-slate-200 dark:border-[#333]'}">Citizen Hub</button>
+           <button onclick="setAdminTab('bugs')" class="flex-1 px-6 py-4 rounded-3xl font-black uppercase text-xs transition-all whitespace-nowrap ${state.adminActiveTab === 'bugs' ? 'bg-red-600 text-white shadow-xl border-red-600' : 'bg-white dark:bg-[#111] text-red-600 hover:bg-red-50 dark:hover:bg-[#222] border border-slate-200 dark:border-[#333]'}">Bug Management</button>
+           <button onclick="setAdminTab('services')" class="flex-1 px-6 py-4 rounded-3xl font-black uppercase text-xs transition-all whitespace-nowrap ${state.adminActiveTab === 'services' ? 'bg-blue-600 text-white shadow-xl border-blue-600' : 'bg-white dark:bg-[#111] text-blue-600 hover:bg-blue-50 dark:hover:bg-[#222] border border-slate-200 dark:border-[#333]'}">Service Editor</button>
+        </div>
+        <div class="mb-12 text-left">
+      `;
+      
+      if (state.adminActiveTab === 'citizens') {
+        html += `
+          <div class="rounded-[2.5rem] border-2 border-purple-500/20 bg-purple-500/5 backdrop-blur-md overflow-hidden dark:bg-[#111] dark:border-[#222]">
+             <div class="p-8 flex items-center justify-between">
+               <div class="flex items-center gap-4 text-purple-600"><i data-lucide="user-cog" class="w-6 h-6"></i><h2 class="text-xl font-black uppercase tracking-tighter">Citizen Hub</h2></div>
+             </div>
+             <div class="px-8 pb-10 space-y-4">
+               ${filteredCitizens.map(citizen => `
+                 <div class="p-5 rounded-[2rem] border border-purple-500/20 bg-white dark:bg-[#1a1a1a] shadow-sm space-y-4">
+                   ${state.editingCitizenId === citizen.ic ? `
+                     <div class="flex flex-col gap-3">
+                       <label class="text-[9px] font-black uppercase opacity-40 px-1 -mb-2">Full Name</label>
+                       <input type="text" id="edit-cit-name" value="${citizen.name}" class="w-full p-4 rounded-xl border-2 border-purple-500/20 dark:border-[#333] font-black outline-none bg-transparent focus:border-purple-500" />
+                       <div class="flex gap-3">
+                         <div class="flex-1 flex flex-col gap-1">
+                           <label class="text-[9px] font-black uppercase opacity-40 px-1">Race</label>
+                           <input type="text" id="edit-cit-race" value="${citizen.race}" class="w-full p-4 rounded-xl border-2 border-purple-500/20 dark:border-[#333] font-black outline-none bg-transparent focus:border-purple-500" />
+                         </div>
+                         <div class="flex-1 flex flex-col gap-1">
+                           <label class="text-[9px] font-black uppercase opacity-40 px-1">Religion</label>
+                           <input type="text" id="edit-cit-religion" value="${citizen.religion}" class="w-full p-4 rounded-xl border-2 border-purple-500/20 dark:border-[#333] font-black outline-none bg-transparent focus:border-purple-500" />
+                         </div>
+                       </div>
+                       <div class="flex gap-2 justify-end mt-2">
+                         <button onclick="cancelCitizenEdit()" class="px-6 py-3 rounded-xl bg-slate-500/10 text-[9px] font-black uppercase hover:bg-slate-500/20 transition-all">Cancel</button>
+                         <button onclick="saveCitizenEdit('${citizen.ic}')" class="px-6 py-3 rounded-xl bg-purple-600 text-white text-[9px] font-black uppercase hover:scale-105 transition-all shadow-md">Save Changes</button>
+                       </div>
+                     </div>
+                   ` : `
+                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                       <div>
+                         <h4 class="text-lg font-black uppercase">${citizen.name}</h4>
+                         <p class="text-[9px] font-bold opacity-30 mt-2 uppercase">IC: ${citizen.ic} • ${citizen.race} • ${citizen.religion}</p>
+                       </div>
+                       <button onclick="startEditCitizen('${citizen.ic}')" class="flex items-center gap-2 px-5 py-2 rounded-xl bg-purple-600 text-white font-black uppercase text-[9px] transition-transform active:scale-95 shadow-md"><i data-lucide="edit-3" class="w-3 h-3"></i> Edit Identity</button>
+                     </div>
+                   `}
+                   <div class="pt-3 border-t border-purple-500/5">
+                     ${citizen.applications?.map(app => `
+                       <div class="flex flex-col md:flex-row md:items-center justify-between p-3 rounded-xl bg-black/5 dark:bg-[#111] mb-2 gap-3">
+                         <p class="font-black text-[10px] uppercase">${app.name}</p>
+                         <div class="flex items-center gap-1 bg-white dark:bg-[#1a1a1a] p-1 rounded-xl shadow-sm border border-slate-200 dark:border-[#333] self-start md:self-auto">
+                           <button onclick="switchAppStatus('${citizen.ic}', '${app.id}', 'Approved')" class="px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${app.status === 'Approved' ? 'bg-green-500 text-white shadow-md' : 'text-slate-400 hover:text-green-500'}">Approve</button>
+                           <button onclick="switchAppStatus('${citizen.ic}', '${app.id}', 'Pending')" class="px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${app.status === 'Pending' ? 'bg-yellow-500 text-white shadow-md' : 'text-slate-400 hover:text-yellow-500'}">Pending</button>
+                           <button onclick="switchAppStatus('${citizen.ic}', '${app.id}', 'Rejected')" class="px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${app.status === 'Rejected' ? 'bg-red-500 text-white shadow-md' : 'text-slate-400 hover:text-red-500'}">Reject</button>
+                         </div>
+                       </div>
+                     `).join('') || ''}
+                   </div>
+                 </div>
+               `).join('')}
+             </div>
+          </div>
+        `;
+      }
+
+      if (state.adminActiveTab === 'bugs') {
+        html += `
+          <div class="rounded-[2.5rem] border-2 border-red-500/20 bg-red-500/5 backdrop-blur-md overflow-hidden dark:bg-[#111] dark:border-[#222]">
+             <div class="p-8 flex items-center justify-between">
+               <div class="flex items-center gap-4 text-red-600"><i data-lucide="bug" class="w-6 h-6"></i><h2 class="text-xl font-black uppercase tracking-tighter">Bug Management</h2></div>
+             </div>
+             <div class="px-8 pb-10 space-y-4">
+               ${state.bugReports.map(bug => `
+                 <div class="p-5 rounded-[2rem] border border-red-500/20 bg-white dark:bg-[#1a1a1a] shadow-sm space-y-4">
+                   <p class="text-[10px] font-black uppercase text-red-500">ID: #${bug.id.toString().slice(-4)} • ${bug.time}</p>
+                   <p class="text-xs font-medium italic">"${bug.desc}"</p>
+                   ${bug.screenshot ? `<img src="${bug.screenshot}" class="h-20 w-20 rounded-lg shadow cursor-pointer hover:scale-105 transition-transform" alt="Bug Screenshot" onclick="openImageModal('${bug.screenshot}')" />` : ''}
+                   <div class="pt-3 border-t border-red-500/10 flex justify-between items-center">
+                     <p class="text-[8px] font-black uppercase opacity-40">Reporter: ${bug.user}</p>
+                     <button onclick="resolveBug(${bug.id})" class="text-[8px] font-black text-red-500 hover:underline">Resolve</button>
+                   </div>
+                 </div>
+               `).join('')}
+               ${state.bugReports.length === 0 ? `<p class="text-xs font-black uppercase opacity-40 text-center py-8">No bugs reported.</p>` : ''}
+             </div>
+          </div>
+        `;
+      }
+
+      if (state.adminActiveTab === 'services') {
+        html += `
+          <div class="rounded-[2.5rem] border-2 border-blue-500/20 bg-blue-500/5 backdrop-blur-md overflow-hidden dark:bg-[#111] dark:border-[#222]">
+             <div class="p-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+               <div class="flex items-center gap-4 text-blue-600"><i data-lucide="layout-grid" class="w-6 h-6"></i><h2 class="text-xl font-black uppercase tracking-tighter">Service Editor</h2></div>
+               <div class="flex gap-2 items-center w-full md:w-auto">
+                 <input type="file" id="logoLightUpload" class="hidden" accept="image/*" onchange="handleLogoUpload(event, 'light')" />
+                 <button onclick="document.getElementById('logoLightUpload').click()" class="flex-1 md:flex-none justify-center p-3 rounded-2xl bg-white text-blue-500 text-[9px] font-black uppercase dark:bg-[#1a1a1a] dark:border dark:border-[#333] shadow-sm flex items-center"><i data-lucide="sun" class="w-3 h-3 mr-1"></i>Light Logo</button>
+                 <input type="file" id="logoDarkUpload" class="hidden" accept="image/*" onchange="handleLogoUpload(event, 'dark')" />
+                 <button onclick="document.getElementById('logoDarkUpload').click()" class="flex-1 md:flex-none justify-center p-3 rounded-2xl bg-slate-900 text-white text-[9px] font-black uppercase dark:bg-[#222] dark:text-white dark:border dark:border-[#444] shadow-sm flex items-center"><i data-lucide="moon" class="w-3 h-3 mr-1"></i>Dark Logo</button>
+               </div>
+             </div>
+             <div class="px-8 pb-10 space-y-6">
+               <button onclick="handleAddNewCategory()" class="w-full py-4 rounded-2xl bg-blue-600 text-white font-black uppercase text-[10px]">New Category</button>
+               ${state.services.map(cat => `
+                 <div class="p-5 rounded-3xl border border-blue-500/10 bg-white/30 dark:bg-[#1a1a1a] space-y-4">
+                   <div class="flex items-center justify-between pb-3 border-b border-blue-500/5">
+                     <h4 class="font-black text-sm uppercase text-blue-500">${cat.title.en}</h4>
+                     <div class="flex gap-2">
+                       <button onclick="handleEditCategory(${cat.id})" class="p-1.5 rounded-lg text-blue-500 hover:bg-blue-500/10"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                       <button onclick="handleAddItem(${cat.id})" class="p-1.5 rounded-lg bg-blue-600 text-white"><i data-lucide="plus" class="w-4 h-4"></i></button>
+                     </div>
+                   </div>
+                   <div class="grid gap-3">
+                     ${cat.items.map((it, idx) => `
+                       <div class="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-xl bg-white dark:bg-[#111] shadow-sm gap-3">
+                         <div class="flex-grow pr-4">
+                           <p class="font-black text-[11px] uppercase">${it.en}</p>
+                           <p class="text-[9px] opacity-40 italic mt-1">"${it.desc}"</p>
+                         </div>
+                         <div class="flex gap-2 self-end md:self-auto">
+                           <button onclick="handleEditItem(${cat.id}, ${idx})" class="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-[#222]"><i data-lucide="settings" class="w-4 h-4"></i></button>
+                           <button onclick="handleDeleteItem(${cat.id}, ${idx})" class="p-2 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-500/20"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                         </div>
+                       </div>
+                     `).join('')}
+                   </div>
+                 </div>
+               `).join('')}
+             </div>
+          </div>
+        `;
+      }
+
+      html += `</div>`;
+      container.innerHTML = html;
+      lucide.createIcons();
+    }
+
+    function renderCatalog() {
+      const searchContainer = document.getElementById('search-container');
+      const catalogContainer = document.getElementById('catalog-panels');
+      
+      if (state.isAdmin) {
+        if(searchContainer) searchContainer.style.display = 'none';
+        catalogContainer.innerHTML = '';
+        return;
+      }
+      
+      if(searchContainer) searchContainer.style.display = 'block';
+
+      const sq = state.searchQuery.toLowerCase();
+      
+      const filterCategory = (cat) => {
+        if (cat.title.en.toLowerCase().includes(sq)) return true;
+        return cat.items.some(it => it.en.toLowerCase().includes(sq) || it.desc.toLowerCase().includes(sq));
+      };
+
+      const studentServices = state.services.filter(s => s.group === "student" && (sq ? filterCategory(s) : true));
+      const sarawakServices = state.services.filter(s => s.group === "service" && (sq ? filterCategory(s) : true));
+
+      let html = `<div class="space-y-16">`;
+
+      const renderCategory = (cat) => {
+        const isExpanded = state.expandedCategoryId === cat.id || sq.length > 0;
+        
+        const titleMatch = cat.title.en.toLowerCase().includes(sq);
+        const filteredItems = (sq && !titleMatch) ? cat.items.filter(it => it.en.toLowerCase().includes(sq) || it.desc.toLowerCase().includes(sq)) : cat.items;
+
+        return `
+          <div id="cat-container-${cat.id}" class="rounded-[2.5rem] border-2 transition-all duration-500 overflow-hidden ${isExpanded ? 'border-yellow-500 shadow-lg' : 'border-slate-800/10 dark:border-[#222]'}">
+            <div onclick="toggleCategory(${cat.id})" class="p-6 md:p-8 cursor-pointer flex items-center gap-6 md:gap-8 hover:bg-slate-50 dark:hover:bg-[#111] transition-colors">
+              <div id="cat-icon-container-${cat.id}" class="flex-shrink-0 flex items-center justify-center transition-colors duration-500 ${isExpanded ? 'text-yellow-500' : 'text-slate-500 dark:text-slate-400'}">
+                <i data-lucide="${getIcon(cat.icon)}" class="w-6 h-6 md:w-7 md:h-7"></i>
+              </div>
+              <div class="flex-grow">
+                <h3 id="cat-title-${cat.id}" class="font-black text-base md:text-lg uppercase transition-colors duration-500 ${isExpanded ? 'text-yellow-600' : ''}">${cat.title.en}</h3>
+              </div>
+              <span id="cat-chevron-${cat.id}" class="transition-transform duration-500 flex items-center justify-center ${isExpanded ? 'rotate-180 text-yellow-500' : 'opacity-20'}">
+                <i data-lucide="chevron-down" class="w-6 h-6 md:w-7 md:h-7"></i>
+              </span>
+            </div>
+            
+            <div id="cat-content-wrapper-${cat.id}" class="grid transition-all duration-500 ease-in-out ${isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}">
+              <div class="overflow-hidden">
+                <div class="px-6 md:px-8 pb-10 space-y-4 text-left border-t border-slate-500/10 dark:border-[#222] pt-4 bg-slate-50/50 dark:bg-[#0a0a0a]">
+                  ${filteredItems.map(item => `
+                    <div class="p-4 border-b border-slate-500/10 dark:border-[#222] group last:border-none">
+                      ${item.link !== "#" 
+                        ? `<a href="${item.link}" target="_blank" rel="noopener noreferrer" class="font-black uppercase text-sm block hover:text-yellow-600 transition-colors text-blue-600 dark:text-blue-400 leading-tight">${item.en}</a>`
+                        : `<span class="font-black uppercase text-sm block text-slate-500 dark:text-slate-400 cursor-not-allowed leading-tight">${item.en}</span>`
+                      }
+                      <p class="text-[10px] opacity-60 italic text-slate-600 dark:text-slate-400 mt-2">
+                        ${item.link === "#" ? (item.desc || "Link Not Available") : "Online Portal Available"}
+                      </p>
+                    </div>
+                  `).join('')}
+                  ${filteredItems.length === 0 ? `<p class="text-xs opacity-40 text-center py-4 font-bold">No matching services found within this category.</p>` : ''}
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      };
+
+      if (studentServices.length > 0) {
+        html += `
+          <div class="space-y-6 text-left px-2 md:px-4">
+            <h2 class="text-2xl md:text-3xl font-black uppercase flex items-center gap-4"><i data-lucide="graduation-cap" class="text-yellow-600 w-8 h-8"></i> School & Student</h2>
+            <div class="space-y-4">
+              ${studentServices.map(renderCategory).join('')}
+            </div>
+          </div>
+        `;
+      }
+
+      if (sarawakServices.length > 0) {
+        html += `
+          <div class="space-y-6 text-left px-2 md:px-4 mt-16">
+            <h2 class="text-2xl md:text-3xl font-black uppercase flex items-center gap-4"><i data-lucide="globe" class="text-yellow-600 w-8 h-8"></i> Service Sarawak</h2>
+            <div class="space-y-4">
+              ${sarawakServices.map(renderCategory).join('')}
+            </div>
+          </div>
+        `;
+      }
+      
+      if (studentServices.length === 0 && sarawakServices.length === 0) {
+        html += `<div class="py-20 text-center opacity-40"><i data-lucide="file-search" class="w-16 h-16 mx-auto mb-4"></i><p class="font-black uppercase tracking-widest text-sm">No services matched your search</p></div>`;
+      }
+
+      html += `</div>`;
+      catalogContainer.innerHTML = html;
+      lucide.createIcons();
+    }
+
+    function renderSignupModal() {
+      const container = document.getElementById('signup-modal-content');
+      let html = '';
+
+      if (state.signUpStep === 1) {
+        html = `
+          <div class="animate-in slide-in-from-bottom-8 duration-500">
+             <div class="text-center mb-16">
+              <h3 class="text-5xl font-black uppercase tracking-tighter mb-4">Create Profile</h3>
+              <p class="text-sm font-bold opacity-30 uppercase tracking-[0.6em]">Official Sarawak Digital Identity</p>
+            </div>
+            ${state.authError ? `<div class="mb-10 p-6 rounded-3xl bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-black uppercase flex items-center gap-4 animate-shake"><i data-lucide="alert-triangle" class="w-6 h-6"></i> ${state.authError}</div>` : ''}
+            
+            <form onsubmit="handleSignupSubmit(event)" class="grid grid-cols-1 lg:grid-cols-2 gap-16">
+               <div class="space-y-8">
+                  <h5 class="text-xs font-black uppercase opacity-20 tracking-widest border-b pb-4 border-slate-500/10 dark:border-[#333]">Personal Details</h5>
+                  <div class="space-y-2"><label class="text-[10px] font-black uppercase opacity-40 px-1">Full Name (As per IC)</label><input required type="text" id="suName" value="${state.form.authName}" oninput="this.value=this.value.toUpperCase()" class="w-full p-5 rounded-3xl border-2 border-slate-500/20 dark:border-[#333] font-black outline-none bg-transparent focus:border-yellow-500" /></div>
+                  <div class="space-y-2"><label class="text-[10px] font-black uppercase opacity-40 px-1">MyKad Number</label><input required type="text" id="suIC" value="${state.form.authIdentity}" oninput="handleSignUpIdentityChange(this)" placeholder="######-##-####" class="w-full p-5 rounded-3xl border-2 border-slate-500/20 dark:border-[#333] font-black outline-none bg-transparent focus:border-yellow-500" /></div>
+                  <div class="grid grid-cols-2 gap-6">
+                     <div class="space-y-2"><label class="text-[10px] font-black uppercase opacity-40 px-1">Race</label>
+                        <select required id="suRace" class="w-full p-5 rounded-3xl border-2 border-slate-500/20 dark:border-[#333] font-black outline-none bg-transparent focus:border-yellow-500 dark:bg-black">
+                          ${['', 'Iban', 'Malay', 'Chinese', 'Bidayuh', 'Melanau', 'Others'].map(o => `<option value="${o}" ${state.form.authRace === o ? 'selected' : ''}>${o || 'Select'}</option>`).join('')}
+                        </select>
+                     </div>
+                     <div class="space-y-2"><label class="text-[10px] font-black uppercase opacity-40 px-1">Religion</label>
+                        <select required id="suReligion" class="w-full p-5 rounded-3xl border-2 border-slate-500/20 dark:border-[#333] font-black outline-none bg-transparent focus:border-yellow-500 dark:bg-black">
+                          ${['', 'Christianity', 'Islam', 'Buddhism', 'Hinduism', 'Others'].map(o => `<option value="${o}" ${state.form.authReligion === o ? 'selected' : ''}>${o || 'Select'}</option>`).join('')}
+                        </select>
+                     </div>
+                  </div>
+                  <div class="grid grid-cols-2 gap-6">
+                     <div class="space-y-2"><label class="text-[10px] font-black uppercase opacity-40 px-1">Gender</label>
+                        <select required id="suGender" class="w-full p-5 rounded-3xl border-2 border-slate-500/20 dark:border-[#333] font-black outline-none bg-transparent focus:border-yellow-500 dark:bg-black">
+                          ${['', 'Male', 'Female'].map(o => `<option value="${o}" ${state.form.authGender === o ? 'selected' : ''}>${o || 'Select'}</option>`).join('')}
+                        </select>
+                     </div>
+                     <div class="space-y-2"><label class="text-[10px] font-black uppercase opacity-40 px-1">Choose Username</label><input required type="text" id="suUser" value="${state.form.authUsername}" class="w-full p-5 rounded-3xl border-2 border-slate-500/20 dark:border-[#333] font-black outline-none bg-transparent focus:border-yellow-500" /></div>
+                  </div>
+               </div>
+               
+               <div class="space-y-8 flex flex-col">
+                  <h5 class="text-xs font-black uppercase opacity-20 tracking-widest border-b pb-4 border-slate-500/10 dark:border-[#333]">Contact Records</h5>
+                  <div class="grid grid-cols-2 gap-6">
+                    <div class="space-y-2"><label class="text-[10px] font-black uppercase opacity-40 px-1">Mobile</label><input required type="text" id="suMobile" value="${state.form.mobilePhone}" oninput="handleMobileChange(this)" placeholder="0123456789" class="w-full p-5 rounded-3xl border-2 border-slate-500/20 dark:border-[#333] font-black bg-transparent outline-none focus:border-yellow-500" /></div>
+                    <div class="space-y-2"><label class="text-[10px] font-black uppercase opacity-40 px-1">Email</label><input required type="email" id="suEmail" value="${state.form.emailAddress}" placeholder="mail@example.com" class="w-full p-5 rounded-3xl border-2 border-slate-500/20 dark:border-[#333] font-black bg-transparent outline-none focus:border-yellow-500" /></div>
+                  </div>
+                  <div class="space-y-2"><label class="text-[10px] font-black uppercase opacity-40 px-1">Permanent Address</label><textarea required rows="2" id="suPerm" oninput="this.value=this.value.toUpperCase()" class="w-full p-4 rounded-3xl border-2 border-slate-500/20 dark:border-[#333] font-medium bg-transparent focus:border-yellow-500 resize-none">${state.form.permanentAddress}</textarea></div>
+                  <div class="space-y-2 flex-grow"><label class="text-[10px] font-black uppercase opacity-40 px-1">Correspondence Address</label><textarea required rows="2" id="suCorr" oninput="this.value=this.value.toUpperCase()" class="w-full p-4 rounded-3xl border-2 border-slate-500/20 dark:border-[#333] font-medium bg-transparent focus:border-yellow-500 resize-none">${state.form.correspondenceAddress}</textarea></div>
+                  
+                  <button type="submit" class="w-full py-8 rounded-[2.5rem] bg-black text-white dark:bg-white dark:text-black font-black uppercase tracking-widest shadow-2xl hover:scale-[1.02] active:scale-95 transition-all text-xl mt-auto">Confirm <i data-lucide="chevron-right" class="inline-block ml-4"></i></button>
+               </div>
+            </form>
+          </div>
+        `;
+      } 
+      else if (state.signUpStep === 2) {
+        html = `
+          <div class="animate-in zoom-in-95 max-w-xl mx-auto py-32 text-center w-full">
+             <div class="mb-16"><div class="w-24 h-24 bg-yellow-500/10 rounded-full mx-auto flex items-center justify-center text-yellow-500 mb-8"><i data-lucide="lock" class="w-10 h-10"></i></div><h3 class="text-5xl font-black uppercase">Set Security</h3></div>
+             ${state.authError ? `<div class="mb-10 p-6 rounded-3xl bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-black uppercase flex items-center gap-4 animate-shake"><i data-lucide="alert-triangle" class="w-6 h-6"></i> ${state.authError}</div>` : ''}
+             
+             <form onsubmit="handleSignupSubmit(event)" class="space-y-10">
+                <div class="space-y-4 text-left">
+                  <label class="text-xs font-black uppercase opacity-40 px-2">Security Phrase</label>
+                  <input required type="text" id="suSecName" value="${state.form.authSecurityName}" placeholder="e.g., BLUE OCEAN" oninput="this.value=this.value.toUpperCase()" class="w-full p-6 rounded-[2rem] border-2 border-slate-500/20 dark:border-[#333] font-black outline-none bg-transparent focus:border-yellow-500 text-xl" />
+                  <p class="text-[9px] opacity-40 italic px-4">This phrase will be shown to you every time you log in to verify site authenticity.</p>
+                </div>
+                <div class="space-y-4 text-left">
+                  <label class="text-xs font-black uppercase opacity-40 px-2">Create Password</label>
+                  <div class="relative">
+                    <input required type="${state.showPassword ? 'text' : 'password'}" id="suPass" value="${state.form.authPassword}" class="w-full p-6 pr-14 rounded-[2rem] border-2 border-slate-500/20 dark:border-[#333] font-black outline-none bg-transparent focus:border-yellow-500 text-2xl" />
+                    <button type="button" id="btn-su-pass" onclick="togglePasswordVisibility('suPass', 'btn-su-pass')" class="absolute right-6 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-100 transition-opacity"><i data-lucide="${state.showPassword ? 'eye-off' : 'eye'}" class="w-6 h-6"></i></button>
+                  </div>
+                  <p class="text-[9px] opacity-40 italic px-4">Must be 8+ characters, include upper/lowercase, number, and symbol.</p>
+                </div>
+                <div class="space-y-4 text-left">
+                  <label class="text-xs font-black uppercase opacity-40 px-2">Confirm Password</label>
+                  <div class="relative">
+                    <input required type="${state.showPassword ? 'text' : 'password'}" id="suConf" value="${state.form.confirmPassword}" class="w-full p-6 pr-14 rounded-[2rem] border-2 border-slate-500/20 dark:border-[#333] font-black outline-none bg-transparent focus:border-yellow-500 text-2xl" />
+                    <button type="button" id="btn-su-conf" onclick="togglePasswordVisibility('suConf', 'btn-su-conf')" class="absolute right-6 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-100 transition-opacity"><i data-lucide="${state.showPassword ? 'eye-off' : 'eye'}" class="w-6 h-6"></i></button>
+                  </div>
+                </div>
+                <button type="submit" class="w-full py-8 rounded-[2.5rem] bg-yellow-500 text-black font-black uppercase tracking-widest shadow-xl transform active:scale-95 text-xl">Continue to Final Review</button>
+                <button type="button" onclick="state.signUpStep=1; renderSignupModal();" class="w-full py-4 text-[10px] font-black uppercase opacity-40">Back to Details</button>
+             </form>
+          </div>
+        `;
+      }
+      else if (state.signUpStep === 3) {
+        html = `
+          <div class="animate-in zoom-in-95 py-32 text-center max-w-2xl mx-auto">
+             <i data-lucide="shield-alert" class="w-24 h-24 text-red-500 mx-auto mb-10 animate-pulse"></i>
+             <h3 class="text-5xl font-black uppercase mb-8">Ready to Start?</h3>
+             <div class="p-10 rounded-[3rem] border-2 border-red-500/20 bg-red-500/5 mb-10 text-left shadow-inner dark:bg-[#111] dark:border-red-500/30"><p class="text-lg font-medium leading-relaxed opacity-80 text-justify">${UI_TEXT.signUpWarning}</p></div>
+             <button onclick="handleSignupSubmit(event)" class="w-full py-8 rounded-[2.5rem] bg-black text-white dark:bg-white dark:text-black font-black uppercase tracking-widest shadow-2xl hover:scale-[1.02] active:scale-95 transition-all text-xl text-center">Agree & Enter Homepage</button>
+             <button type="button" onclick="state.signUpStep=2; renderSignupModal();" class="w-full py-4 text-[10px] font-black uppercase opacity-40 mt-4">Back to Security</button>
+          </div>
+        `;
+      }
+
+      container.innerHTML = html;
+      lucide.createIcons();
+    }
+
+    // --- Initialization & Loop ---
+    function init() {
+      renderSidebarContent();
+      renderCatalog();
+    }
+
+    // Bootstrap app
+    window.addEventListener('DOMContentLoaded', init);
+
+  </script>
+
+  <!-- Full Screen Image Modal for Admin Bug Viewing -->
+  <div id="image-modal" class="fixed inset-0 z-[300] flex items-center justify-center p-8 bg-black/90 backdrop-blur-md cursor-pointer" style="display: none;" onclick="this.style.display='none'">
+    <img id="image-modal-img" src="" class="max-w-full max-h-full rounded-2xl shadow-2xl animate-in zoom-in-95 duration-300 object-contain" />
+    <p class="absolute bottom-8 text-white font-black uppercase tracking-widest text-xs opacity-50">Click anywhere to close</p>
+  </div>
+</body>
 </html>
