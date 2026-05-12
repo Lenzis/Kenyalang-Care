@@ -6,6 +6,7 @@
   <title>Kenyalang Care</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     /* Native Momentum Scrolling for iOS/Android */
     .smooth-scroll {
@@ -13,6 +14,8 @@
       overscroll-behavior-y: contain;
     }
     
+/* Placeholder comment to make sure github notice the change*/
+
     /* Prevent iOS Input Auto-Zoom */
     @media screen and (max-width: 768px) {
       input, select, textarea {
@@ -125,9 +128,59 @@
     </header>
 
     <main class="flex-grow w-full md:max-w-3xl lg:max-w-4xl mx-auto px-4 py-8 md:py-16 text-center">
-      <div id="search-container" class="relative group mb-12">
-        <i data-lucide="search" class="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-yellow-600 z-10"></i>
-        <input type="text" id="searchInput" oninput="handleSearch(this.value)" placeholder="Search" class="w-full pl-16 pr-6 py-7 rounded-3xl border-2 outline-none font-bold text-lg shadow-2xl transition-all bg-white border-slate-200 focus:border-black dark:bg-[#111] dark:border-[#222] dark:text-white dark:focus:border-white" />
+      <div id="search-container" class="mb-12">
+        <div class="relative group">
+          <i data-lucide="search" class="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-yellow-600 z-10"></i>
+          <input type="text" id="searchInput" oninput="handleSearch(this.value)" placeholder="Search" class="w-full pl-16 pr-6 py-7 rounded-[2rem] border-2 outline-none font-bold text-lg shadow-2xl transition-all bg-white border-slate-200 focus:border-black dark:bg-[#111] dark:border-[#222] dark:text-white dark:focus:border-[#444]" />
+        </div>
+        
+        <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+           <div class="relative">
+             <select id="filter-marital" onchange="handleFilter('marital', this.value)" class="w-full p-4 pr-10 rounded-[1rem] border-2 border-slate-200 dark:border-[#222] bg-white dark:bg-[#111] text-[10px] font-black uppercase outline-none appearance-none cursor-pointer hover:border-yellow-500 focus:border-yellow-500 transition-colors">
+               <option value="">Marital Status</option>
+               <option value="married">Married</option>
+               <option value="divorced">Divorced</option>
+               <option value="single">Single</option>
+             </select>
+             <i data-lucide="chevron-down" class="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-40 pointer-events-none text-yellow-500"></i>
+           </div>
+           
+           <div class="relative">
+             <select id="filter-age" onchange="handleFilter('age', this.value)" class="w-full p-4 pr-10 rounded-[1rem] border-2 border-slate-200 dark:border-[#222] bg-white dark:bg-[#111] text-[10px] font-black uppercase outline-none appearance-none cursor-pointer hover:border-yellow-500 focus:border-yellow-500 transition-colors">
+               <option value="">Age</option>
+               <option value="child">Child / Infant</option>
+               <option value="adult">Youth / Adult</option>
+               <option value="senior">Senior Citizen</option>
+             </select>
+             <i data-lucide="chevron-down" class="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-40 pointer-events-none text-yellow-500"></i>
+           </div>
+           
+           <div class="relative">
+             <select id="filter-employment" onchange="handleFilter('employment', this.value)" class="w-full p-4 pr-10 rounded-[1rem] border-2 border-slate-200 dark:border-[#222] bg-white dark:bg-[#111] text-[10px] font-black uppercase outline-none appearance-none cursor-pointer hover:border-yellow-500 focus:border-yellow-500 transition-colors">
+               <option value="">Employment</option>
+               <option value="student">Student</option>
+               <option value="unemployed">Unemployed</option>
+               <option value="employed">Employed</option>
+             </select>
+             <i data-lucide="chevron-down" class="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-40 pointer-events-none text-yellow-500"></i>
+           </div>
+           
+           <div class="relative">
+             <select id="filter-income" onchange="handleFilter('income', this.value)" class="w-full p-4 pr-10 rounded-[1rem] border-2 border-slate-200 dark:border-[#222] bg-white dark:bg-[#111] text-[10px] font-black uppercase outline-none appearance-none cursor-pointer hover:border-yellow-500 focus:border-yellow-500 transition-colors">
+               <option value="">Household Income</option>
+               <option value="b40">B40 (Low Income)</option>
+               <option value="m40">M40 (Mid Income)</option>
+               <option value="t20">T20 (High Income)</option>
+             </select>
+             <i data-lucide="chevron-down" class="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 opacity-40 pointer-events-none text-yellow-500"></i>
+           </div>
+        </div>
+
+        <div id="reset-filter-container" class="mt-4 flex justify-end" style="display: none;">
+          <button onclick="resetFilters()" class="text-[10px] font-black uppercase flex items-center gap-2 opacity-80 hover:opacity-100 transition-all text-red-500 dark:text-red-400 py-2 px-4 rounded-xl hover:bg-red-500/10 active:scale-95">
+            <i data-lucide="x" class="w-3 h-3"></i> Reset Filters
+          </button>
+        </div>
       </div>
 
       <div id="admin-panels"></div>
@@ -141,7 +194,7 @@
           <span class="opacity-10">•</span>
           <a href="https://www.termsfeed.com/live/d6005081-c8db-4c74-a101-75a592693761" target="_blank" rel="noopener noreferrer" class="hover:text-yellow-600 transition-all font-bold uppercase tracking-widest">privacy policy</a>
         </div>
-        <p class="text-[10px] opacity-20 uppercase font-black tracking-[0.4em]">© 2026 Kenyalang Care. Digital Sarawak Unit.</p>
+        <p class="text-[10px] opacity-20 uppercase font-black tracking-[0.4em]">© 2026 Kenyalang Care from Group Netrunner</p>
       </div>
     </footer>
   </div>
@@ -151,7 +204,7 @@
     <div id="about-modal-content" class="relative w-full max-w-md rounded-[2.5rem] p-10 text-center shadow-2xl animate-in zoom-in-95 duration-300 bg-white dark:bg-[#111] dark:border-2 dark:border-[#222]" onclick="event.stopPropagation()">
       <i data-lucide="message-square" class="w-10 h-10 text-yellow-500 mx-auto mb-6"></i>
       <h3 class="text-2xl font-black uppercase mb-4 tracking-tighter">About us</h3>
-      <p class="text-sm opacity-80 leading-[1.6] font-medium text-justify mb-8">Kenyalang Care is the official digital services gateway for the citizens of Sarawak. Managed by the Digital Sarawak Unit, we aim to bridge the gap between government assistance and the community through high-efficiency identity verification and service accessibility.</p>
+      <p class="text-sm opacity-80 leading-[1.6] font-medium text-justify mb-8">we are from group netrunner</p>
       <button onclick="toggleAboutUs(false)" class="w-full py-4 rounded-2xl bg-black text-white dark:bg-white dark:text-black font-black uppercase tracking-[0.2em] text-xs hover:scale-105 transition-all">Close</button>
     </div>
   </div>
@@ -169,6 +222,13 @@
   </div>
 
   <script>
+    // --- Supabase Configuration ---
+    // Paste your Project URL and anon key from:
+    // Supabase Dashboard > Project Settings > API
+    const SUPABASE_URL = 'https://hqxwamnbhwdsszuzynht.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhxeHdhbW5iaHdkc3N6dXp5bmh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0ODI5NzMsImV4cCI6MjA5MTA1ODk3M30.yGDGNF_wbGQzmAE6aGibRTO8uXhFlXdxHYav-QIfZsM';
+    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
     // --- Data Configuration ---
     const UI_TEXT = {
       authErrorNotFound: "Identity not recognized in system.",
@@ -190,29 +250,16 @@
     const state = {
       darkMode: false,
       searchQuery: '',
+      filters: { marital: '', age: '', employment: '', income: '' },
       expandedCategoryId: null,
       showSidebar: false,
-      sidebarAuthMode: 'menu', // 'menu', 'overview', 'edit-profile', 'status', 'security', 'report-bug', 'login', 'admin-login', 'change-password'
+      sidebarAuthMode: 'menu', // 'menu', 'overview', 'edit-profile', 'status', 'security', 'report-bug', 'login', 'change-password'
       logoLight: 'Logo White Transparent.jpg',
       logoDark: 'Logo Dark Transparent.jpg',
       
-      citizens: [
-        {
-          id: "KC-980404135567", name: "Elvin Owen", ic: "980404-13-5567", username: "elvin13", password: "User123!", 
-          race: "Chinese", religion: "Christianity", gender: "Male", mobile: "123456789", email: "elvin@example.com",
-          securityName: "BLUE OCEAN",
-          permanentAddress: "SIBU, SARAWAK", correspondenceAddress: "JALAN JALAN DI SIBU, SARAWAK",
-          applications: [{ id: "APP-001", name: "Kenyalang Gold Card", status: "Approved", date: "26 Apr 2026" }],
-          loginHistory: [{ time: "26 Apr 2026, 14:30:00", device: "Mac OS" }]
-        }
-      ],
-      
-      admins: [{ 
-        id: "#KC130001", name: "System Administrator", email: "admin@sarawak.gov.my", password: "@Admin123!", securityName: "ROOT ACCESS",
-        mobile: "0198765432", permanentAddress: "WISMA BAPA MALAYSIA, KUCHING", correspondenceAddress: "WISMA BAPA MALAYSIA, KUCHING",
-        loginHistory: [], applications: []
-      }],
-      bugReports: [{ id: 1, desc: "Status not updating on mobile view.", screenshot: null, user: "KC-980404135567", time: "26 Apr 2026" }],
+      citizens: [],
+      admins: [],
+      bugReports: [],
       services: [],
       
       // Admin Panel UI States
@@ -229,6 +276,7 @@
       isIdentityVerified: false,
       profileImage: null,
       tempImage: null,
+      tempFile: null,
       imageScale: 1,
       isConfirmingPhoto: false,
 
@@ -237,12 +285,12 @@
         authIdentity: '', authPassword: '', confirmPassword: '', authSecurityName: '', authEmail: '',
         authName: '', authUsername: '', authGender: '', authRace: '', authReligion: '',
         mobilePhone: '', emailAddress: '', permanentAddress: '', correspondenceAddress: '',
-        bugDesc: '', bugScreen: null
+        bugDesc: '', bugScreen: null, signupProfileImage: null, signupProfileFile: null
       },
       signUpStep: 1
     };
 
-    // Full Service Catalog Injection
+    // Thoroughly sanitized FullServices array to prevent syntax errors
     const FullServices = [
       { id: 1, group: "student", title: { en: "1. Aids / Bantuan for student" }, icon: "SchoolIcon", items: [
         { en: "Aids / Bantuan for student", desc: "Online Service", link: "https://myys.yayasansarawak.org.my/student_self_registration/step_1_form.php" }
@@ -410,19 +458,18 @@
         { en: "Request for Declaration of Dissolution of Marriage Due to Religious Change", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/773/" },
         { en: "Request for Faraq Nikah", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/775/" },
         { en: "Request for Engagement Damages Claim", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/762/" },
-        { en: "Request for Permission to Get Married 'With a Non-Citizen Judge'", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/761/" },
-        { en: "Request for Permission to Get Married 'A Woman Who Divorced Without 'Iddah / Adorned Widow'", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/758/" },
-        { en: "Request for Confirmation of 'Iddah", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/770/" },
-        { en: "Request for Ila's Claim", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/776/" },
+        { en: "Request for Permission to Get Married", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/761/" },
+        { en: "Request for Confirmation of Iddah", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/770/" },
+        { en: "Request for Ila Claim", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/776/" },
         { en: "Request for Claim of Separate Property During Polygamy", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/779/" },
         { en: "Request for Divorce Decree Confirmation Claim", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/766/" },
         { en: "Request for Nusyuz Conviction Claim", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/764/" },
-        { en: "Request for Change of 'Iddah", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/771/" },
-        { en: "Request for Khulu' / Talaq Redemption", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/768/" },
-        { en: "Request for Refused/Deferred Guardian Claim", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/759/" },
-        { en: "Request for Legalization of Ta'liq Divorce", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/767/" },
-        { en: "Request for Tuntutan Li’an", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/778/" },
-        { en: "Request Permission to Get Married 'Being a Guardian Due to Being a Guardian in Ihram for Hajj / Umrah'", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/760/" },
+        { en: "Request for Change of Iddah", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/771/" },
+        { en: "Request for Talaq Redemption", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/768/" },
+        { en: "Request for Refused Guardian Claim", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/759/" },
+        { en: "Request for Legalization of Divorce", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/767/" },
+        { en: "Request for Tuntutan Lian", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/778/" },
+        { en: "Request Permission to Get Married", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/760/" },
         { en: "Request for Zihar Claim", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/777/" }
       ]},
       { id: 12, group: "service", title: { en: "7. Social & Community" }, icon: "Heart", items: [
@@ -490,12 +537,12 @@
         { en: "Application for Certification of Crop Scheme", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/738/" },
         { en: "Purchase Print out of Title", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/797/" },
         { en: "Application for Permission to Deal", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/808/" },
-        { en: "Buy Cadastral Map produced by Land and Survey Department Sarawak in hardcopy or softcopy PDF format", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/803/" },
+        { en: "Buy Cadastral Map", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/803/" },
         { en: "Application for Miscellaneous Temporary Occupation Licence", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/810/" },
         { en: "Land Rent and Premium Enquiry and Payment", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/800/" },
         { en: "Full Print Out of Title", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/801/" },
         { en: "Buy Survey Plan", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/799/" },
-        { en: "Application for Renewal of TOL Residential Lots at Resettlement Schemes and Kampung Extension Scheme", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/811/" },
+        { en: "Application for Renewal of TOL Residential Lots", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/811/" },
         { en: "Application for Exchange of Farm Ownership", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/736/" },
         { en: "Application of Storage Permit for Carbon Storage", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/755/" },
         { en: "Online Lodgement of Land Instrument", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/812/" },
@@ -503,22 +550,22 @@
         { en: "Application of Storage Operator for Carbon Storage", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/754/" },
         { en: "Application for New Utility Survey Job", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/817/" },
         { en: "Application for Termination of Livestock Scheme", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/737/" },
-        { en: "Application for Ownership Transfer of Crop Division’s Development Program", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/781/" },
-        { en: "Buy Cartographic Map produced by Land and Survey Department Sarawak in hardcopy or softcopy PDF format", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/804/" },
+        { en: "Application for Ownership Transfer of Crop Division Development Program", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/781/" },
+        { en: "Buy Cartographic Map", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/804/" },
         { en: "Application for Sales of Rock Materials and Minerals Outside of Sarawak", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/819/" },
-        { en: "Application to Transfer Permanent Food Production Park (TKPM)’s Program", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/788/" },
-        { en: "Application for Renewal as a Permanent Food Production Park (TKPM)’s Participant", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/786/" },
+        { en: "Application to Transfer Permanent Food Production Park (TKPM) Program", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/788/" },
+        { en: "Application for Renewal as a Permanent Food Production Park", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/786/" },
         { en: "Submission of Survey Jobs", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/813/" },
         { en: "Extraction of Survey Job", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/814/" },
         { en: "Submission of Strata Application & Surveys", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/815/" },
-        { en: "Application for Termination of Inland Fisheries’ Development Program", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/785/" },
-        { en: "Application for Transfer of Ownership for Agrobased Industry’s Development Program", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/783/" },
-        { en: "Application for Termination of Crop Division’s Development Program", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/780/" },
-        { en: "Application for Termination of Agrobased Industry’s Development Program", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/782/" },
-        { en: "Application for Termination as a Permanent Food Production Park (TKPM)’s Participant", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/787/" },
+        { en: "Application for Termination of Inland Fisheries Development Program", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/785/" },
+        { en: "Application for Transfer of Ownership for Agrobased Industry Development Program", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/783/" },
+        { en: "Application for Termination of Crop Division Development Program", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/780/" },
+        { en: "Application for Termination of Agrobased Industry Development Program", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/782/" },
+        { en: "Application for Termination as a Permanent Food Production Park", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/787/" },
         { en: "Application of Monitoring of Farm Record for Inland Fisheries", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/784/" },
-        { en: "Buy Orthophoto produced or procured by Land and Survey Department Sarawak in hardcopy or softcopy PDF/ECW format.", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/805/" },
-        { en: "Buy Aerial Photograph produced by Land and Survey Department Sarawak in hardcopy or softcopy format", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/802/" },
+        { en: "Buy Orthophoto format.", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/805/" },
+        { en: "Buy Aerial Photograph format", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/802/" },
         { en: "Submission of Utility Survey Job", desc: "Online Service", link: "https://service.sarawak.gov.my/web/web/home/sla_view/211/818/" }
       ]},
       { id: 14, group: "service", title: { en: "9. Education & Learning" }, icon: "SchoolIcon", items: [
@@ -601,7 +648,8 @@
     }
 
     function toggleCategory(id) {
-      if (state.searchQuery.length > 0) return; // Prevent collapse animation during search
+      const hasFilters = Object.values(state.filters).some(val => val !== '');
+      if (state.searchQuery.length > 0 || hasFilters) return; // Prevent collapse animation during search or active filters
       
       const wasExpanded = state.expandedCategoryId;
       state.expandedCategoryId = state.expandedCategoryId === id ? null : id;
@@ -618,11 +666,11 @@
     }
 
     function updateCategoryDOM(id, isExpanded) {
-       const container = document.getElementById(`cat-container-${id}`);
-       const iconCont = document.getElementById(`cat-icon-container-${id}`);
-       const title = document.getElementById(`cat-title-${id}`);
-       const chevron = document.getElementById(`cat-chevron-${id}`);
-       const wrapper = document.getElementById(`cat-content-wrapper-${id}`);
+       const container = document.getElementById('cat-container-' + id);
+       const iconCont = document.getElementById('cat-icon-container-' + id);
+       const title = document.getElementById('cat-title-' + id);
+       const chevron = document.getElementById('cat-chevron-' + id);
+       const wrapper = document.getElementById('cat-content-wrapper-' + id);
        
        if(!container || !iconCont || !title || !chevron || !wrapper) return;
        
@@ -660,8 +708,10 @@
         state.authError = null;
         renderSignupModal();
       } else {
-        // Reset form
         Object.keys(state.form).forEach(k => state.form[k] = '');
+        state.form.bugScreen = null;
+        state.form.signupProfileImage = null;
+        state.form.signupProfileFile = null;
       }
     }
 
@@ -671,7 +721,6 @@
       state.isIdentityVerified = false;
       state.matchedUser = null;
       
-      // Clear auth form inputs when navigating
       state.form.authIdentity = '';
       state.form.authPassword = '';
       state.form.authEmail = '';
@@ -685,7 +734,7 @@
     }
 
     function handleMobileChange(input) {
-      input.value = input.value.replace(/\D/g, '').slice(0, 10);
+      input.value = input.value.replace(/\D/g, '').slice(0, 13);
       state.form.mobilePhone = input.value;
     }
 
@@ -710,71 +759,211 @@
       }
     };
 
-    // --- Action Handlers ---
-    window.handleVerifyIdentity = (e) => {
-      e.preventDefault();
-      syncFormToState('authIdentityInput', 'authIdentity');
-      
-      showLoader(true);
-      setTimeout(() => {
-        showLoader(false);
-        if (state.sidebarAuthMode === 'admin-login') {
-          const found = state.admins.find(a => a.email.toLowerCase() === state.form.authIdentity.toLowerCase());
-          if (!found) { state.authError = UI_TEXT.authErrorNotFound; renderSidebarContent(); return; }
-          state.matchedUser = found;
-        } else {
-          const found = state.citizens.find(c => c.ic === state.form.authIdentity || c.username === state.form.authIdentity);
-          if (!found) { state.authError = UI_TEXT.authErrorNotFound; renderSidebarContent(); return; }
-          state.matchedUser = found;
-        }
-        state.isIdentityVerified = true;
-        renderSidebarContent();
-      }, 1000);
+    window.handleFilter = (key, val) => {
+      state.filters[key] = val;
+      const hasFilters = Object.values(state.filters).some(v => v !== '');
+      const resetBtn = document.getElementById('reset-filter-container');
+      if (resetBtn) resetBtn.style.display = hasFilters ? 'flex' : 'none';
+      renderCatalog();
     };
 
-    window.handleLoginSubmit = (e) => {
+    window.resetFilters = () => {
+      state.filters = { marital: '', age: '', employment: '', income: '' };
+      ['marital', 'age', 'employment', 'income'].forEach(id => {
+        const el = document.getElementById(`filter-${id}`);
+        if(el) el.value = '';
+      });
+      const resetBtn = document.getElementById('reset-filter-container');
+      if (resetBtn) resetBtn.style.display = 'none';
+      renderCatalog();
+    };
+
+    function itemMatchesFilters(item, catTitle, filters) {
+        const text = (catTitle + " " + item.en + " " + (item.desc || "")).toLowerCase();
+        let matches = true;
+
+        if (filters.marital === 'married') matches = matches && /(ibu bersalin|bib|endowment|efs|marriage|married|kahwin|poligami|ruju|anak|isteri|suami)/i.test(text);
+        if (filters.marital === 'divorced') matches = matches && /(divorce|widow|cerai|iddah|fasakh|khulu|ta'liq|zihar|nusyuz|janda|duda)/i.test(text);
+        if (filters.marital === 'single') matches = matches && /(scholarship|biasiswa|student|job|pinjaman|youth|aids|sekolah|bujang)/i.test(text);
+
+        if (filters.age === 'child') matches = matches && /(endowment|efs|school|student|child|anak|sekolah)/i.test(text);
+        if (filters.age === 'adult') matches = matches && /(i - gps|biasiswa|job|marriage|business|licence|permit|contractor|water|land|strata|kahwin|dewasa)/i.test(text);
+        if (filters.age === 'senior') matches = matches && /(kenyalang|kgc|senior|schb|warga emas)/i.test(text);
+
+        if (filters.employment === 'student') matches = matches && /(biasiswa|pinjaman|student|school|i - gps|tuition|sekolah)/i.test(text);
+        if (filters.employment === 'unemployed') matches = matches && /(geran pelancaran|gp|skas|bantuan|welfare|aids|kebajikan)/i.test(text);
+        if (filters.employment === 'employed') matches = matches && /(business|trade|procurement|wireman|pipe fitter|contractor|licence|permit|water|land|pekerja)/i.test(text);
+
+        if (filters.income === 'b40') matches = matches && /(skas|senior|schb|public housing|bantuan|aids|welfare|kebajikan)/i.test(text);
+        if (filters.income === 'm40') matches = matches && /(pinjaman|water|land|hydro|utilities)/i.test(text);
+        if (filters.income === 't20') matches = matches && /(business|trade|permit|licence|premium|strata|contractor)/i.test(text);
+
+        return matches;
+    }
+
+    // --- Action Handlers ---
+    window.handleVerifyIdentity = async (e) => {
+      e.preventDefault();
+      syncFormToState('authIdentityInput', 'authIdentity');
+      showLoader(true);
+      try {
+        const inputStr = state.form.authIdentity.trim().toLowerCase();
+        let found = null;
+
+        // Search admins by email or id
+        const { data: adminByEmail } = await db.from('admins').select('*').ilike('email', inputStr).limit(1);
+        const { data: adminById } = (!adminByEmail || !adminByEmail.length)
+          ? await db.from('admins').select('*').ilike('id', inputStr).limit(1)
+          : { data: null };
+        const adminRow = (adminByEmail && adminByEmail[0]) || (adminById && adminById[0]);
+        if (adminRow) {
+          found = {
+            ...adminRow,
+            securityName: adminRow.security_name,
+            permanentAddress: adminRow.permanent_address,
+            correspondenceAddress: adminRow.correspondence_address,
+            isAdmin: true, applications: [], loginHistory: []
+          };
+        }
+
+        // Search citizens by IC, username or email
+        if (!found) {
+          const { data: byIC } = await db.from('citizens').select('*').ilike('ic', inputStr).limit(1);
+          const { data: byUser } = (!byIC || !byIC.length)
+            ? await db.from('citizens').select('*').ilike('username', inputStr).limit(1)
+            : { data: null };
+          const { data: byEmail } = (!byIC || !byIC.length) && (!byUser || !byUser.length)
+            ? await db.from('citizens').select('*').ilike('email', inputStr).limit(1)
+            : { data: null };
+          const citizenRow = (byIC && byIC[0]) || (byUser && byUser[0]) || (byEmail && byEmail[0]);
+          if (citizenRow) {
+            const [{ data: apps }, { data: loginHist }] = await Promise.all([
+              db.from('applications').select('*').eq('citizen_id', citizenRow.id),
+              db.from('login_history').select('*').eq('user_id', citizenRow.id).order('logged_in_at', { ascending: false }).limit(20)
+            ]);
+            found = {
+              ...citizenRow,
+              securityName: citizenRow.security_name,
+              permanentAddress: citizenRow.permanent_address,
+              correspondenceAddress: citizenRow.correspondence_address,
+              profileImage: citizenRow.profile_image,
+              imageScale: citizenRow.image_scale || 1,
+              applications: (apps || []).map(a => ({ id: a.id, name: a.name, status: a.status, date: a.date })),
+              loginHistory: (loginHist || []).map(l => ({ time: new Date(l.logged_in_at).toLocaleString(), device: l.device }))
+            };
+          }
+        }
+
+        showLoader(false);
+        if (!found) {
+          const looksLikeEmail = inputStr.includes('@');
+          state.authError = looksLikeEmail
+            ? 'Email not found. Try logging in with your IC number (e.g. 980404-13-5567) or username instead.'
+            : UI_TEXT.authErrorNotFound;
+          renderSidebarContent(); return;
+        }
+        state.matchedUser = found;
+        state.isIdentityVerified = true;
+        renderSidebarContent();
+      } catch (err) {
+        console.error('Verify identity error:', err);
+        showLoader(false);
+        state.authError = 'Connection error. Check your Supabase configuration.';
+        renderSidebarContent();
+      }
+    };
+
+    window.handleLoginSubmit = async (e) => {
       e.preventDefault();
       syncFormToState('authIdentityInput', 'authIdentity');
       syncFormToState('authPasswordInput', 'authPassword');
-      
       showLoader(true);
-      setTimeout(() => {
-        showLoader(false);
-        if (state.sidebarAuthMode === 'admin-login') {
-          const admin = state.admins.find(a => a.email.toLowerCase() === state.form.authIdentity.toLowerCase() && a.password === state.form.authPassword);
-          if (admin) {
-            const loginRecord = { time: new Date().toLocaleString(), device: getDevice() };
-            admin.loginHistory = [loginRecord, ...(admin.loginHistory || [])];
-            state.isAdmin = true; state.currentUser = admin; state.isLoggedIn = true;
-            state.adminActiveTab = 'citizens';
-            toggleSidebar(false);
-            renderAdminPanels();
-            renderCatalog();
-          } else { 
-            state.authError = UI_TEXT.authErrorWrongCreds; 
-            renderSidebarContent(); 
-          }
-        } else {
-          const user = state.citizens.find(c => (c.ic === state.form.authIdentity || c.username === state.form.authIdentity) && c.password === state.form.authPassword);
-          if (user) {
-            const loginRecord = { time: new Date().toLocaleString(), device: getDevice() };
-            user.loginHistory = [loginRecord, ...(user.loginHistory || [])];
-            state.isAdmin = false; state.currentUser = user; state.isLoggedIn = true;
-            toggleSidebar(false);
-            renderCatalog();
-          } else { 
-            state.authError = UI_TEXT.authErrorWrongCreds; 
-            renderSidebarContent(); 
+      try {
+        let loginOk = false;
+        if (state.matchedUser) {
+          if (state.matchedUser.isAdmin) {
+            // Admin uses custom password check (not Supabase Auth)
+            loginOk = state.matchedUser.password === state.form.authPassword;
+          } else {
+            // Citizens authenticate through Supabase Auth
+            const { error: signInErr } = await db.auth.signInWithPassword({
+              email: state.matchedUser.email,
+              password: state.form.authPassword
+            });
+            if (signInErr) console.error('Supabase Auth sign-in error:', signInErr);
+            loginOk = !signInErr;
           }
         }
-      }, 1200);
+
+        if (loginOk) {
+          const loginRecord = { time: new Date().toLocaleString(), device: getDevice() };
+          state.matchedUser.loginHistory = [loginRecord, ...(state.matchedUser.loginHistory || [])];
+
+          // Record login to Supabase (fire-and-forget)
+          db.from('login_history').insert({
+            user_id: state.matchedUser.id,
+            user_type: state.matchedUser.isAdmin ? 'admin' : 'citizen',
+            device: getDevice()
+          }).then(({ error }) => { if (error) console.error('Login history error:', error); });
+
+          state.currentUser = state.matchedUser;
+          state.isLoggedIn = true;
+          state.isAdmin = !!state.matchedUser.isAdmin;
+
+          if (state.isAdmin) {
+            state.adminActiveTab = 'citizens';
+            // Load all citizens, applications, login history and bug reports for admin panel
+            const [
+              { data: allCitizens },
+              { data: allApps },
+              { data: allLoginHist },
+              { data: allBugs }
+            ] = await Promise.all([
+              db.from('citizens').select('*'),
+              db.from('applications').select('*'),
+              db.from('login_history').select('*').eq('user_type', 'citizen').order('logged_in_at', { ascending: false }),
+              db.from('bug_reports').select('*').order('created_at', { ascending: false })
+            ]);
+            state.citizens = (allCitizens || []).map(c => ({
+              ...c,
+              securityName: c.security_name,
+              permanentAddress: c.permanent_address,
+              correspondenceAddress: c.correspondence_address,
+              profileImage: c.profile_image,
+              imageScale: c.image_scale || 1,
+              applications: (allApps || []).filter(a => a.citizen_id === c.id).map(a => ({ id: a.id, name: a.name, status: a.status, date: a.date })),
+              loginHistory: (allLoginHist || []).filter(l => l.user_id === c.id).map(l => ({ time: new Date(l.logged_in_at).toLocaleString(), device: l.device }))
+            }));
+            state.bugReports = (allBugs || []).map(b => ({
+              id: b.id, desc: b.description, screenshot: b.screenshot,
+              user: b.citizen_id, time: new Date(b.created_at).toLocaleString()
+            }));
+          }
+
+          showLoader(false);
+          toggleSidebar(false);
+          renderAdminPanels();
+          renderCatalog();
+        } else {
+          showLoader(false);
+          state.authError = UI_TEXT.authErrorWrongCreds;
+          renderSidebarContent();
+        }
+      } catch (err) {
+        console.error('Login error:', err);
+        showLoader(false);
+        state.authError = `Login failed: ${err.message || 'Please try again.'}`;
+        renderSidebarContent();
+      }
     };
 
     window.handleLogout = () => {
       showLoader(true);
       toggleSidebar(false);
+      db.auth.signOut().catch(err => console.error('Sign out error:', err));
       setTimeout(() => {
         state.isLoggedIn = false; state.isAdmin = false; state.currentUser = null; state.profileImage = null;
+        state.isIdentityVerified = false; state.matchedUser = null; state.authError = null;
         changeAuthMode('menu');
         renderAdminPanels();
         renderCatalog();
@@ -792,11 +981,18 @@
         state.authError = "Mobile and Addresses cannot be empty.";
         renderSidebarContent(); return;
       }
-      
+
       state.currentUser.mobile = state.form.mobilePhone;
       if (state.form.emailAddress) state.currentUser.email = state.form.emailAddress;
       state.currentUser.permanentAddress = state.form.permanentAddress;
       state.currentUser.correspondenceAddress = state.form.correspondenceAddress;
+
+      db.from('citizens').update({
+        mobile: state.form.mobilePhone,
+        email: state.form.emailAddress || state.currentUser.email,
+        permanent_address: state.form.permanentAddress,
+        correspondence_address: state.form.correspondenceAddress
+      }).eq('id', state.currentUser.id).then(({ error }) => { if (error) console.error('Update profile error:', error); });
 
       state.authError = "Profile updated successfully!";
       renderSidebarContent();
@@ -810,23 +1006,30 @@
       if (!state.form.authPassword) {
         state.authError = "Password cannot be empty."; renderSidebarContent(); return;
       }
-      const regex = /^(?=.[a-z])(?=.[A-Z])(?=.\d)(?=.[@$!%?&_#-])[A-Za-z\d@$!%?&_#-]{8,}$/;
+      const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#-_])[A-Za-z\d@$!%*?&#-_]{8,}$/;
       if (!regex.test(state.form.authPassword)) { state.authError = "New password does not meet requirements."; renderSidebarContent(); return; }
       if (state.form.authPassword !== state.form.confirmPassword) { state.authError = "Passwords mismatch."; renderSidebarContent(); return; }
       
-      state.currentUser.password = state.form.authPassword;
+      const newPass = state.form.authPassword;
+      const tableToUpdate = state.currentUser.isAdmin ? 'admins' : 'citizens';
+      db.from(tableToUpdate).update({ password: newPass }).eq('id', state.currentUser.id)
+        .then(({ error }) => { if (error) console.error('Change password error:', error); });
+
+      state.currentUser.password = newPass;
       state.authError = "Password updated successfully!";
       state.form.authPassword = ''; state.form.confirmPassword = '';
       renderSidebarContent();
       setTimeout(() => { changeAuthMode('overview'); }, 1500);
     };
 
-    window.handleSignupSubmit = (e) => {
+    window.handleSignupSubmit = async (e) => {
       e.preventDefault();
       
       if (state.signUpStep === 1) {
-        syncFormToState('suName', 'authName'); syncFormToState('suRace', 'authRace'); syncFormToState('suReligion', 'authReligion');
+        syncFormToState('suIC', 'authIdentity'); syncFormToState('suName', 'authName');
+        syncFormToState('suRace', 'authRace'); syncFormToState('suReligion', 'authReligion');
         syncFormToState('suGender', 'authGender'); syncFormToState('suUser', 'authUsername'); syncFormToState('suEmail', 'emailAddress');
+        syncFormToState('suMobile', 'mobilePhone');
         syncFormToState('suPerm', 'permanentAddress'); syncFormToState('suCorr', 'correspondenceAddress');
 
         if (!state.form.authName || !state.form.authIdentity || !state.form.authRace || !state.form.authReligion || !state.form.authGender || !state.form.authUsername || !state.form.mobilePhone || !state.form.emailAddress || !state.form.permanentAddress || !state.form.correspondenceAddress) {
@@ -840,7 +1043,7 @@
       if (state.signUpStep === 2) {
         syncFormToState('suPass', 'authPassword'); syncFormToState('suConf', 'confirmPassword'); syncFormToState('suSecName', 'authSecurityName');
         if (!state.form.authSecurityName) { state.authError = "Security phrase is required."; renderSignupModal(); return; }
-        const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&_#-])[A-Za-z\d@$!%*?&_#-]{8,}$/;
+        const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#-_])[A-Za-z\d@$!%*?&#-_]{8,}$/;
         if (!regex.test(state.form.authPassword)) { state.authError = "Requirements: 8+ chars, upper, lower, number, symbol."; renderSignupModal(); return; }
         if (state.form.authPassword !== state.form.confirmPassword) { state.authError = "Passwords mismatch."; renderSignupModal(); return; }
         state.authError = null; state.signUpStep = 3; renderSignupModal(); return;
@@ -848,19 +1051,113 @@
       
       if (state.signUpStep === 3) {
         showLoader(true);
-        setTimeout(() => {
-          const newCit = { 
-            ic: state.form.authIdentity, name: state.form.authName, username: state.form.authUsername, password: state.form.authPassword, 
-            race: state.form.authRace, religion: state.form.authReligion, gender: state.form.authGender, 
-            permanentAddress: state.form.permanentAddress, correspondenceAddress: state.form.correspondenceAddress, 
-            mobile: state.form.mobilePhone, email: state.form.emailAddress, securityName: state.form.authSecurityName,
-            applications: [], loginHistory: [{ time: new Date().toLocaleString(), device: getDevice() }] 
+        try {
+          const newId = `KC-${state.form.authIdentity.replace(/-/g, '')}`;
+
+          // 1. Register with Supabase Auth (shows user in Dashboard > Authentication > Users)
+          const { error: authErr } = await db.auth.signUp({
+            email: state.form.emailAddress,
+            password: state.form.authPassword,
+            options: { data: { citizen_id: newId, ic: state.form.authIdentity } }
+          });
+          if (authErr) {
+            if (authErr.message.toLowerCase().includes('already registered') || authErr.message.toLowerCase().includes('user already registered')) {
+              // Auth account exists but citizens row may be missing (partial previous signup).
+              // Verify password ownership then continue to DB insert.
+              const { error: verifyErr } = await db.auth.signInWithPassword({
+                email: state.form.emailAddress,
+                password: state.form.authPassword
+              });
+              if (verifyErr) {
+                showLoader(false);
+                state.authError = 'An account with this email already exists. Please log in instead.';
+                renderSignupModal(); return;
+              }
+              await db.auth.signOut();
+              // Password verified — fall through to DB insert below
+            } else {
+              showLoader(false);
+              state.authError = `Sign up failed: ${authErr.message}`;
+              renderSignupModal(); return;
+            }
+          }
+
+          // 2. Upload profile photo to Supabase Storage bucket 'profiles'
+          let profileImageUrl = null;
+          if (state.form.signupProfileFile) {
+            const ext = (state.form.signupProfileFile.name.split('.').pop() || 'jpg').toLowerCase();
+            const filePath = `${newId}/photo.${ext}`;
+            const { error: upErr } = await db.storage
+              .from('profiles')
+              .upload(filePath, state.form.signupProfileFile, { upsert: true, contentType: state.form.signupProfileFile.type });
+            if (!upErr) {
+              const { data: urlData } = db.storage.from('profiles').getPublicUrl(filePath);
+              profileImageUrl = urlData.publicUrl;
+            } else {
+              console.error('Profile image upload error:', upErr);
+            }
+          }
+
+          // 3. Insert citizen row to database
+          const { error: insertErr } = await db.from('citizens').insert({
+            id: newId,
+            name: state.form.authName,
+            ic: state.form.authIdentity,
+            username: state.form.authUsername,
+            password: state.form.authPassword,
+            race: state.form.authRace,
+            religion: state.form.authReligion,
+            gender: state.form.authGender,
+            mobile: state.form.mobilePhone,
+            email: state.form.emailAddress,
+            security_name: state.form.authSecurityName,
+            permanent_address: state.form.permanentAddress,
+            correspondence_address: state.form.correspondenceAddress,
+            profile_image: profileImageUrl
+          });
+          if (insertErr) {
+            console.error('Signup DB error:', insertErr);
+            showLoader(false);
+            if (insertErr.code === '23505') {
+              // A row with this IC or username already exists — find it so we can guide the user
+              const { data: existing } = await db.from('citizens').select('ic, username').ilike('ic', state.form.authIdentity).limit(1);
+              if (existing && existing[0]) {
+                state.authError = `Your profile already exists in the system. Please log in using your IC number (${state.form.authIdentity}) or username instead of email.`;
+              } else {
+                state.authError = 'Username is already taken. Please choose a different username and try again.';
+              }
+            } else {
+              state.authError = `Registration failed: ${insertErr.message}`;
+            }
+            renderSignupModal(); return;
+          }
+
+          // 4. Record first login
+          await db.from('login_history').insert({ user_id: newId, user_type: 'citizen', device: getDevice() });
+
+          const newCit = {
+            id: newId, ic: state.form.authIdentity, name: state.form.authName,
+            username: state.form.authUsername, password: state.form.authPassword,
+            race: state.form.authRace, religion: state.form.authReligion, gender: state.form.authGender,
+            permanentAddress: state.form.permanentAddress, correspondenceAddress: state.form.correspondenceAddress,
+            mobile: state.form.mobilePhone, email: state.form.emailAddress,
+            securityName: state.form.authSecurityName,
+            profileImage: profileImageUrl,
+            imageScale: 1,
+            applications: [], loginHistory: [{ time: new Date().toLocaleString(), device: getDevice() }]
           };
+          state.form.signupProfileImage = null;
+          state.form.signupProfileFile = null;
           state.citizens.push(newCit);
           state.currentUser = newCit; state.isLoggedIn = true;
           showLoader(false); toggleSignUp(false);
           renderCatalog();
-        }, 1500);
+        } catch (err) {
+          console.error('Signup error:', err);
+          showLoader(false);
+          state.authError = `Registration failed: ${err.message || 'Please try again.'}`;
+          renderSignupModal();
+        }
       }
     };
 
@@ -868,8 +1165,14 @@
     window.submitBug = () => {
       syncFormToState('bugInputArea', 'bugDesc');
       if (!state.form.bugDesc) return;
+      const citizenId = state.currentUser && !state.currentUser.isAdmin ? state.currentUser.id : null;
+      db.from('bug_reports').insert({
+        citizen_id: citizenId,
+        description: state.form.bugDesc,
+        screenshot: state.form.bugScreen || null
+      }).then(({ error }) => { if (error) console.error('Bug report error:', error); });
       const newBug = {
-        id: Date.now(), desc: state.form.bugDesc, screenshot: state.form.bugScreen, 
+        id: Date.now(), desc: state.form.bugDesc, screenshot: state.form.bugScreen,
         user: state.currentUser ? state.currentUser.ic : "Guest", time: new Date().toLocaleString()
       };
       state.bugReports.unshift(newBug);
@@ -890,19 +1193,60 @@
     window.handleImageUpload = (e) => {
       const file = e.target.files[0];
       if (file) {
+        if (file.size > 5 * 1024 * 1024) { alert('Photo must be 5 MB or smaller.'); e.target.value = ''; return; }
+        state.tempFile = file;
         const reader = new FileReader();
         reader.onloadend = () => { state.tempImage = reader.result; state.imageScale = 1; state.isConfirmingPhoto = true; renderSidebarContent(); };
         reader.readAsDataURL(file);
       }
     };
-    window.handleConfirmPhoto = () => { 
-      if (state.currentUser) {
+
+    window.handleSignupImageUpload = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) { alert('Photo must be 5 MB or smaller.'); e.target.value = ''; return; }
+      state.form.signupProfileFile = file;
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        state.form.signupProfileImage = reader.result;
+        const wrap = document.getElementById('signup-avatar-wrap');
+        if (wrap) wrap.innerHTML = `<img src="${reader.result}" class="w-full h-full object-cover" alt="Profile" />`;
+      };
+      reader.readAsDataURL(file);
+    };
+    window.handleConfirmPhoto = async () => {
+      if (state.currentUser && !state.currentUser.isAdmin) {
+        showLoader(true);
+        let imageUrl = state.tempImage; // fallback to base64 preview if storage fails
+        if (state.tempFile) {
+          const ext = (state.tempFile.name.split('.').pop() || 'jpg').toLowerCase();
+          const filePath = `${state.currentUser.id}/photo.${ext}`;
+          const { error: upErr } = await db.storage
+            .from('profiles')
+            .upload(filePath, state.tempFile, { upsert: true, contentType: state.tempFile.type });
+          if (!upErr) {
+            const { data: urlData } = db.storage.from('profiles').getPublicUrl(filePath);
+            imageUrl = urlData.publicUrl;
+          } else {
+            console.error('Storage upload error:', upErr);
+          }
+        }
+        // DB stores the clean URL; state gets a cache-busted URL so the new image shows immediately
+        await db.from('citizens')
+          .update({ profile_image: imageUrl, image_scale: state.imageScale })
+          .eq('id', state.currentUser.id)
+          .then(({ error }) => { if (error) console.error('Save profile image error:', error); });
+        state.currentUser.profileImage = imageUrl.startsWith('data:') ? imageUrl : imageUrl + '?t=' + Date.now();
+        state.currentUser.imageScale = state.imageScale;
+        showLoader(false);
+      } else if (state.currentUser) {
         state.currentUser.profileImage = state.tempImage;
         state.currentUser.imageScale = state.imageScale;
       }
-      state.tempImage = null; 
-      state.isConfirmingPhoto = false; 
-      renderSidebarContent(); 
+      state.tempImage = null;
+      state.tempFile = null;
+      state.isConfirmingPhoto = false;
+      renderSidebarContent();
     };
     window.handleCancelPhoto = () => { state.tempImage = null; state.isConfirmingPhoto = false; renderSidebarContent(); };
     
@@ -940,6 +1284,8 @@
         c.name = document.getElementById('edit-cit-name').value;
         c.race = document.getElementById('edit-cit-race').value;
         c.religion = document.getElementById('edit-cit-religion').value;
+        db.from('citizens').update({ name: c.name, race: c.race, religion: c.religion }).eq('ic', ic)
+          .then(({ error }) => { if (error) console.error('Edit citizen error:', error); });
       }
       state.editingCitizenId = null;
       renderAdminPanels();
@@ -951,6 +1297,8 @@
         const app = c.applications.find(a => a.id === appId);
         if(app) {
           app.status = newStatus;
+          db.from('applications').update({ status: newStatus }).eq('id', appId)
+            .then(({ error }) => { if (error) console.error('Update application error:', error); });
           renderAdminPanels();
         }
       }
@@ -993,7 +1341,11 @@
       }
     };
 
-    window.resolveBug = (id) => { state.bugReports = state.bugReports.filter(b => b.id !== id); renderAdminPanels(); };
+    window.resolveBug = (id) => {
+      db.from('bug_reports').delete().eq('id', id).then(({ error }) => { if (error) console.error('Resolve bug error:', error); });
+      state.bugReports = state.bugReports.filter(b => b.id !== id);
+      renderAdminPanels();
+    };
 
     // --- Render Functions ---
     function renderSidebarContent() {
@@ -1009,43 +1361,57 @@
       let html = '';
       
       if (state.sidebarAuthMode === 'menu') {
+        let profileBlock = '';
+
+        if (state.isConfirmingPhoto) {
+          profileBlock = `
+            <div class="flex flex-col items-center animate-in zoom-in-95 w-full">
+               <h4 class="font-black text-xs uppercase opacity-40 mb-4 tracking-widest">Adjust Photo</h4>
+               <div class="w-28 h-28 rounded-[2.5rem] flex items-center justify-center shadow-2xl overflow-hidden border-4 border-yellow-500 mb-6 bg-slate-500/10">
+                  <img id="avatarPreview" src="${state.tempImage}" class="w-full h-full object-cover" style="transform: scale(${state.imageScale})" alt="Preview" />
+               </div>
+               <input type="range" min="0.5" max="3" step="0.01" value="${state.imageScale}" oninput="updateImageScale(this.value)" class="w-full accent-yellow-500 mb-6 max-w-[200px]" />
+               <div class="flex gap-2 w-full max-w-[200px]">
+                  <button onclick="handleCancelPhoto()" class="flex-grow py-3 rounded-xl bg-slate-500/10 text-[9px] font-black uppercase hover:bg-slate-500/20 transition-all">Cancel</button>
+                  <button onclick="handleConfirmPhoto()" class="flex-grow py-3 rounded-xl bg-yellow-500 text-black text-[9px] font-black uppercase font-bold hover:scale-105 transition-all shadow-lg">Apply</button>
+               </div>
+            </div>
+          `;
+        } else if (state.isLoggedIn) {
+          const profileImgSrc = (state.currentUser && state.currentUser.profileImage) ? state.currentUser.profileImage : null;
+          const scale = (state.currentUser && state.currentUser.imageScale) ? state.currentUser.imageScale : 1;
+          const innerImg = profileImgSrc 
+             ? `<img src="${profileImgSrc}" style="transform: scale(${scale})" class="w-full h-full object-cover" alt="Avatar" />`
+             : `<i data-lucide="user" class="w-14 h-14 text-slate-400"></i>`;
+             
+          const uploadBtn = `<button onclick="document.getElementById('avatarUpload').click()" class="absolute -bottom-2 -right-2 p-3 rounded-2xl bg-yellow-500 text-black shadow-lg transform hover:scale-110 active:scale-95 transition-all"><i data-lucide="camera" class="w-5 h-5"></i></button>`;
+
+          profileBlock = `
+            <div class="relative group">
+               <div class="w-28 h-28 rounded-[2.5rem] flex items-center justify-center shadow-2xl overflow-hidden bg-slate-500/10 border-4 ${state.darkMode ? 'border-[#222]' : 'border-white'}">
+                  ${innerImg}
+               </div>
+               ${uploadBtn}
+               <input type="file" id="avatarUpload" class="hidden" accept="image/*" onchange="handleImageUpload(event)" />
+            </div>
+            <div class="mt-6">
+               <h4 class="font-black uppercase tracking-tighter text-2xl leading-tight">${state.currentUser.name}</h4>
+               ${!state.isAdmin ? `<p class="text-[10px] font-bold opacity-30 mt-3 tracking-widest uppercase text-center">ID: KC-${state.currentUser.ic.replace(/-/g,'')}</p>` : `<p class="text-[10px] font-bold opacity-30 mt-3 tracking-widest uppercase text-center">ID: ${state.currentUser.id}</p>`}
+               ${state.isAdmin ? `<p class="text-[10px] font-black text-purple-500 mt-2 tracking-widest uppercase text-center">Admin Hub Active</p>` : ''}
+            </div>
+          `;
+        }
+
         html = `
           <div class="space-y-10 animate-in fade-in zoom-in-95">
              ${(state.isLoggedIn || state.isConfirmingPhoto) ? `
              <div class="flex flex-col items-center">
-                ${state.isConfirmingPhoto ? `
-                  <div class="flex flex-col items-center animate-in zoom-in-95 w-full">
-                     <h4 class="font-black text-xs uppercase opacity-40 mb-4 tracking-widest">Adjust Photo</h4>
-                     <div class="w-28 h-28 rounded-[2.5rem] flex items-center justify-center shadow-2xl overflow-hidden border-4 border-yellow-500 mb-6 bg-slate-500/10">
-                        <img id="avatarPreview" src="${state.tempImage}" class="w-full h-full object-cover" style="transform: scale(${state.imageScale})" alt="Preview" />
-                     </div>
-                     <input type="range" min="0.5" max="3" step="0.01" value="${state.imageScale}" oninput="updateImageScale(this.value)" class="w-full accent-yellow-500 mb-6 max-w-[200px]" />
-                     <div class="flex gap-2 w-full max-w-[200px]">
-                        <button onclick="handleCancelPhoto()" class="flex-grow py-3 rounded-xl bg-slate-500/10 text-[9px] font-black uppercase hover:bg-slate-500/20 transition-all">Cancel</button>
-                        <button onclick="handleConfirmPhoto()" class="flex-grow py-3 rounded-xl bg-yellow-500 text-black text-[9px] font-black uppercase font-bold hover:scale-105 transition-all shadow-lg">Apply</button>
-                     </div>
-                  </div>
-                ` : `
-                  <div class="relative group">
-                     <div class="w-28 h-28 rounded-[2.5rem] flex items-center justify-center shadow-2xl overflow-hidden bg-slate-500/10 border-4 ${state.darkMode ? 'border-[#222]' : 'border-white'}">
-                        ${state.currentUser && state.currentUser.profileImage 
-                          ? `<img src="${state.currentUser.profileImage}" style="transform: scale(${state.currentUser.imageScale || 1})" class="w-full h-full object-cover" alt="Avatar" />` 
-                          : `<i data-lucide="user" class="w-14 h-14 text-slate-400"></i>`}
-                     </div>
-                     <button onclick="document.getElementById('avatarUpload').click()" class="absolute -bottom-2 -right-2 p-3 rounded-2xl bg-yellow-500 text-black shadow-lg transform hover:scale-110 active:scale-95 transition-all"><i data-lucide="camera" class="w-5 h-5"></i></button>
-                     <input type="file" id="avatarUpload" class="hidden" accept="image/*" onchange="handleImageUpload(event)" />
-                  </div>
-                  <div class="mt-6">
-                     <h4 class="font-black uppercase tracking-tighter text-2xl leading-tight">${state.currentUser.name}</h4>
-                     ${!state.isAdmin ? `<p class="text-[10px] font-bold opacity-30 mt-3 tracking-widest uppercase text-center">ID: KC-${state.currentUser.ic.replace(/-/g,'')}</p>` : `<p class="text-[10px] font-bold opacity-30 mt-3 tracking-widest uppercase text-center">ID: ${state.currentUser.id}</p>`}
-                     ${state.isAdmin ? `<p class="text-[10px] font-black text-purple-500 mt-2 tracking-widest uppercase text-center">Admin Hub Active</p>` : ''}
-                  </div>
-                `}
+               ${profileBlock}
              </div>
              ` : ''}
 
              ${!state.isLoggedIn && !state.isConfirmingPhoto ? `
-               <div class="space-y-3">
+               <div class="space-y-3 mt-4">
                   <button onclick="changeAuthMode('login')" class="w-full py-5 rounded-3xl bg-black text-white dark:bg-white dark:text-black font-black uppercase text-xs tracking-widest shadow-xl transition-transform active:scale-95">Log In</button>
                   <button onclick="toggleSignUp(true); toggleSidebar(false);" class="w-full py-5 rounded-3xl border-2 border-slate-500/20 dark:border-[#333] font-black uppercase text-xs tracking-widest hover:bg-slate-500/5 transition-all">Sign Up</button>
                </div>
@@ -1071,8 +1437,7 @@
         if (!state.isConfirmingPhoto) {
           footer.innerHTML = `
             <button onclick="triggerBugAnimation()" class="w-full py-4 rounded-2xl border border-red-500/20 text-red-500 font-black text-[10px] uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all">Report Bug</button>
-            ${!state.isLoggedIn ? `<button onclick="changeAuthMode('admin-login')" class="w-full py-3 text-[10px] font-black uppercase opacity-20 hover:opacity-100 hover:text-purple-500 transition-all text-xs">Hey Admin</button>` : ''}
-            ${state.isLoggedIn ? `<button onclick="handleLogout()" class="w-full flex items-center justify-center gap-4 p-5 text-red-500 font-black text-sm hover:bg-red-500/10 rounded-3xl transition-all active:scale-95"><i data-lucide="log-out" class="w-5 h-5"></i> Sign Out</button>` : ''}
+            ${state.isLoggedIn ? `<button onclick="handleLogout()" class="w-full flex items-center justify-center gap-4 p-5 text-red-500 font-black text-sm hover:bg-red-500/10 rounded-3xl transition-all active:scale-95 mt-4"><i data-lucide="log-out" class="w-5 h-5"></i> Sign Out</button>` : ''}
           `;
           footer.style.display = 'block';
         } else {
@@ -1080,18 +1445,23 @@
         }
       } 
       else if (state.sidebarAuthMode === 'overview') {
-        const detailsList = state.isAdmin ? [
-          { l: 'Employee ID', v: state.currentUser?.id }, 
-          { l: 'Name', v: state.currentUser?.name }, 
-          { l: 'Role', v: 'System Administrator' },
-          { l: 'Security Phrase', v: state.currentUser?.securityName }
-        ] : [
-          { l: 'MyKad', v: state.currentUser?.ic }, 
-          { l: 'Name', v: state.currentUser?.name }, 
-          { l: 'Race', v: state.currentUser?.race }, 
-          { l: 'Religion', v: state.currentUser?.religion },
-          { l: 'Security Phrase', v: state.currentUser?.securityName }
-        ];
+        let detailsList = [];
+        if (state.isAdmin) {
+          detailsList = [
+            { l: 'Employee ID', v: (state.currentUser && state.currentUser.id) ? state.currentUser.id : 'N/A' }, 
+            { l: 'Name', v: (state.currentUser && state.currentUser.name) ? state.currentUser.name : 'N/A' }, 
+            { l: 'Role', v: 'System Administrator' },
+            { l: 'Security Phrase', v: (state.currentUser && state.currentUser.securityName) ? state.currentUser.securityName : 'N/A' }
+          ];
+        } else {
+          detailsList = [
+            { l: 'MyKad', v: (state.currentUser && state.currentUser.ic) ? state.currentUser.ic : 'N/A' }, 
+            { l: 'Name', v: (state.currentUser && state.currentUser.name) ? state.currentUser.name : 'N/A' }, 
+            { l: 'Race', v: (state.currentUser && state.currentUser.race) ? state.currentUser.race : 'N/A' }, 
+            { l: 'Religion', v: (state.currentUser && state.currentUser.religion) ? state.currentUser.religion : 'N/A' },
+            { l: 'Security Phrase', v: (state.currentUser && state.currentUser.securityName) ? state.currentUser.securityName : 'N/A' }
+          ];
+        }
 
         html = `
           <div class="animate-in slide-in-from-right-4 text-left">
@@ -1102,14 +1472,14 @@
              <div class="space-y-4">
                 <h5 class="text-[10px] font-black uppercase opacity-20 tracking-widest border-b border-slate-500/10 dark:border-[#333] pb-2">Personal Details</h5>
                 ${detailsList.map(f => `
-                  <div class="p-4 rounded-2xl bg-slate-500/5 opacity-80"><p class="text-[9px] font-bold opacity-40 uppercase">${f.l}</p><p class="font-black text-xs">${f.v || 'N/A'}</p></div>
+                  <div class="p-4 rounded-2xl bg-slate-500/5 opacity-80"><p class="text-[9px] font-bold opacity-40 uppercase">${f.l}</p><p class="font-black text-xs">${f.v}</p></div>
                 `).join('')}
                 
                 <h5 class="text-[10px] font-black uppercase opacity-20 tracking-widest border-b border-slate-500/10 dark:border-[#333] pb-2 mt-8">Contact & Address</h5>
-                <div class="p-4 rounded-2xl bg-slate-500/5 opacity-80"><p class="text-[9px] font-bold opacity-40 uppercase">Mobile (+60)</p><p class="font-black text-xs">${state.currentUser?.mobile || 'N/A'}</p></div>
-                <div class="p-4 rounded-2xl bg-slate-500/5 opacity-80"><p class="text-[9px] font-bold opacity-40 uppercase">Email Address</p><p class="font-black text-xs">${state.currentUser?.email || 'N/A'}</p></div>
-                <div class="p-4 rounded-2xl bg-slate-500/5 opacity-80"><p class="text-[9px] font-bold opacity-40 uppercase">Permanent Address</p><p class="font-black text-xs">${state.currentUser?.permanentAddress || 'N/A'}</p></div>
-                <div class="p-4 rounded-2xl bg-slate-500/5 opacity-80"><p class="text-[9px] font-bold opacity-40 uppercase">Correspondence Address</p><p class="font-black text-xs">${state.currentUser?.correspondenceAddress || 'N/A'}</p></div>
+                <div class="p-4 rounded-2xl bg-slate-500/5 opacity-80"><p class="text-[9px] font-bold opacity-40 uppercase">Mobile (+60)</p><p class="font-black text-xs">${(state.currentUser && state.currentUser.mobile) ? state.currentUser.mobile : 'N/A'}</p></div>
+                <div class="p-4 rounded-2xl bg-slate-500/5 opacity-80"><p class="text-[9px] font-bold opacity-40 uppercase">Email Address</p><p class="font-black text-xs">${(state.currentUser && state.currentUser.email) ? state.currentUser.email : 'N/A'}</p></div>
+                <div class="p-4 rounded-2xl bg-slate-500/5 opacity-80"><p class="text-[9px] font-bold opacity-40 uppercase">Permanent Address</p><p class="font-black text-xs">${(state.currentUser && state.currentUser.permanentAddress) ? state.currentUser.permanentAddress : 'N/A'}</p></div>
+                <div class="p-4 rounded-2xl bg-slate-500/5 opacity-80"><p class="text-[9px] font-bold opacity-40 uppercase">Correspondence Address</p><p class="font-black text-xs">${(state.currentUser && state.currentUser.correspondenceAddress) ? state.currentUser.correspondenceAddress : 'N/A'}</p></div>
 
                 <button onclick="changeAuthMode('edit-profile')" class="w-full py-5 rounded-3xl bg-yellow-500 text-black font-black uppercase text-xs tracking-widest shadow-xl mt-6 active:scale-95 transition-transform">Edit Profile</button>
                 <button onclick="changeAuthMode('change-password')" class="w-full py-5 rounded-3xl bg-slate-500/10 dark:bg-[#222] font-black uppercase text-xs tracking-widest mt-4 hover:bg-slate-500/20 dark:hover:bg-[#333] transition-all">Change Password</button>
@@ -1174,46 +1544,60 @@
         footer.style.display = 'none';
       }
       else if (state.sidebarAuthMode === 'status') {
+        let appsHtml = '';
+        if (state.currentUser && state.currentUser.applications && state.currentUser.applications.length > 0) {
+           appsHtml = state.currentUser.applications.map(app => `
+             <div class="p-4 rounded-2xl bg-slate-500/5">
+               <p class="font-black text-[11px] uppercase">${app.name}</p>
+               <div class="flex justify-between items-center mt-3">
+                  <span class="px-2 py-1 rounded-lg text-[9px] font-black text-white uppercase ${app.status === 'Approved' ? 'bg-green-500' : app.status === 'Rejected' ? 'bg-red-500' : 'bg-yellow-500'}">${app.status}</span>
+                  <span class="text-[9px] font-bold opacity-40">${app.date}</span>
+               </div>
+             </div>
+           `).join('');
+        } else {
+           appsHtml = `<p class="text-xs opacity-40 text-center">No applications found.</p>`;
+        }
+        
         html = `
           <div class="animate-in slide-in-from-right-4 text-left">
              ${backBtnHtml}
              <h4 class="font-black uppercase text-2xl mb-8">Track Status</h4>
              <div class="space-y-4">
-                ${state.currentUser?.applications?.map(app => `
-                  <div class="p-4 rounded-2xl bg-slate-500/5">
-                    <p class="font-black text-[11px] uppercase">${app.name}</p>
-                    <div class="flex justify-between items-center mt-3">
-                       <span class="px-2 py-1 rounded-lg text-[9px] font-black text-white uppercase ${app.status === 'Approved' ? 'bg-green-500' : app.status === 'Rejected' ? 'bg-red-500' : 'bg-yellow-500'}">${app.status}</span>
-                       <span class="text-[9px] font-bold opacity-40">${app.date}</span>
-                    </div>
-                  </div>
-                `).join('') || ''}
-                ${(!state.currentUser?.applications || state.currentUser?.applications.length === 0) ? `<p class="text-xs opacity-40 text-center">No applications found.</p>` : ''}
+                ${appsHtml}
              </div>
           </div>
         `;
         footer.style.display = 'none';
       }
       else if (state.sidebarAuthMode === 'security') {
+        let historyHtml = '';
+        if (state.currentUser && state.currentUser.loginHistory && state.currentUser.loginHistory.length > 0) {
+           historyHtml = state.currentUser.loginHistory.map(log => `
+             <div class="p-4 rounded-2xl bg-slate-500/5 flex flex-col gap-1">
+                <span class="text-[11px] font-black">${log.device}</span>
+                <span class="text-[9px] font-bold opacity-40">${log.time}</span>
+             </div>
+           `).join('');
+        } else {
+           historyHtml = `<p class="text-xs opacity-40 text-center">No history available.</p>`;
+        }
+
         html = `
           <div class="animate-in slide-in-from-right-4 text-left">
              ${backBtnHtml}
              <div class="flex items-center gap-3 mb-8"><i data-lucide="shield" class="text-yellow-500 w-8 h-8"></i><h4 class="font-black uppercase text-2xl">Security</h4></div>
              <h5 class="text-[10px] font-black uppercase opacity-20 tracking-widest border-b border-slate-500/10 pb-2 mb-4">Login History</h5>
              <div class="space-y-3">
-                ${state.currentUser?.loginHistory?.map(log => `
-                  <div class="p-4 rounded-2xl bg-slate-500/5 flex flex-col gap-1">
-                     <span class="text-[11px] font-black">${log.device}</span>
-                     <span class="text-[9px] font-bold opacity-40">${log.time}</span>
-                  </div>
-                `).join('') || ''}
-                ${(!state.currentUser?.loginHistory || state.currentUser?.loginHistory.length === 0) ? `<p class="text-xs opacity-40 text-center">No history available.</p>` : ''}
+                ${historyHtml}
              </div>
           </div>
         `;
         footer.style.display = 'none';
       }
       else if (state.sidebarAuthMode === 'report-bug') {
+        let screenshotHtml = state.form.bugScreen ? `<img src="${state.form.bugScreen}" class="h-24 rounded-lg" alt="P" />` : `<i data-lucide="image" class="w-8 h-8 opacity-20"></i>`;
+        
         html = `
           <div class="animate-in slide-in-from-right-4 text-left space-y-6">
              ${backBtnHtml}
@@ -1222,7 +1606,7 @@
              <div class="space-y-2">
                <label class="text-[10px] font-black uppercase opacity-40 px-1">Screenshot</label>
                <div onclick="document.getElementById('bugImgUpload').click()" class="w-full p-8 rounded-2xl border-2 border-slate-500/20 dark:border-[#333] border-dashed flex flex-col items-center justify-center cursor-pointer">
-                 ${state.form.bugScreen ? `<img src="${state.form.bugScreen}" class="h-24 rounded-lg" alt="P" />` : `<i data-lucide="image" class="w-8 h-8 opacity-20"></i>`}
+                 ${screenshotHtml}
                </div>
                <input type="file" id="bugImgUpload" class="hidden" accept="image/*" onchange="handleBugScreenshot(event)" />
              </div>
@@ -1232,36 +1616,41 @@
         footer.style.display = 'none';
       }
       else if (state.sidebarAuthMode === 'login' || state.sidebarAuthMode === 'admin-login') {
+        let authBlockHtml = '';
+        if (state.isIdentityVerified && state.matchedUser) {
+           authBlockHtml = `
+             <div class="animate-in slide-in-from-top-4 space-y-6">
+               <div class="p-5 rounded-2xl bg-yellow-500/10 border-2 border-yellow-500 text-center shadow-inner">
+                  <p class="text-[9px] font-black uppercase opacity-40 mb-1 text-yellow-700 dark:text-yellow-400">Security Phrase</p>
+                  <p class="font-black text-xl text-yellow-600 dark:text-yellow-500 tracking-wider">"${state.matchedUser.securityName || 'N/A'}"</p>
+                  <p class="text-[9px] font-bold opacity-50 mt-2 uppercase text-yellow-700 dark:text-yellow-400">Is this your exact security phrase?</p>
+               </div>
+
+               <div class="space-y-2">
+                 <label class="text-[10px] font-black uppercase opacity-40 px-1">Password</label>
+                 <div class="relative">
+                   <input type="password" id="authPasswordInput" value="${state.form.authPassword}" oninput="state.form.authPassword = this.value" class="w-full p-5 pr-12 rounded-2xl border-2 border-slate-500/20 dark:border-[#333] font-black outline-none bg-transparent focus:border-black dark:focus:border-white" />
+                   <button type="button" id="btn-login-pass" onclick="togglePasswordVisibility('authPasswordInput', 'btn-login-pass')" class="absolute right-4 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-100 transition-opacity">
+                      <i data-lucide="eye" class="w-5 h-5"></i>
+                   </button>
+                 </div>
+               </div>
+             </div>
+           `;
+        }
+      
         html = `
           <div class="animate-in slide-in-from-right-4 text-left">
              ${backBtnHtml}
-             <h4 class="font-black uppercase text-2xl mb-8">${state.sidebarAuthMode === 'login' ? 'User Access' : 'Admin Unlock'}</h4>
+             <h4 class="font-black uppercase text-2xl mb-8">Portal Login</h4>
              ${state.authError ? `<div class="mb-6 p-4 rounded-2xl bg-red-500/10 text-red-500 text-[10px] font-black uppercase flex items-center gap-3 animate-shake"><i data-lucide="alert-triangle" class="w-4 h-4"></i> ${state.authError}</div>` : ''}
              <form onsubmit="${state.isIdentityVerified ? 'handleLoginSubmit(event)' : 'handleVerifyIdentity(event)'}" class="space-y-6">
                 <div class="space-y-2">
-                  <label class="text-[10px] font-black uppercase opacity-40 px-1">${state.sidebarAuthMode === 'login' ? 'Identity ID or Username' : 'Registered Email'}</label>
+                  <label class="text-[10px] font-black uppercase opacity-40 px-1">Identity ID, Username, or Email</label>
                   <input type="text" id="authIdentityInput" value="${state.form.authIdentity}" oninput="state.form.authIdentity = this.value; if(state.authError || state.isIdentityVerified) { state.authError=null; state.isIdentityVerified=false; state.matchedUser=null; renderSidebarContent(); setTimeout(() => { const el = document.getElementById('authIdentityInput'); if(el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); } }, 0); }" class="w-full p-5 rounded-2xl border-2 border-slate-500/20 dark:border-[#333] font-black outline-none bg-transparent ${state.isIdentityVerified ? 'border-green-500/40' : 'focus:border-black dark:focus:border-white'}" />
                 </div>
-                ${state.isIdentityVerified && state.matchedUser ? `
-                  <div class="animate-in slide-in-from-top-4 space-y-6">
-                    <div class="p-5 rounded-2xl bg-yellow-500/10 border-2 border-yellow-500 text-center shadow-inner">
-                       <p class="text-[9px] font-black uppercase opacity-40 mb-1 text-yellow-700 dark:text-yellow-400">Security Phrase</p>
-                       <p class="font-black text-xl text-yellow-600 dark:text-yellow-500 tracking-wider">"${state.matchedUser.securityName || 'N/A'}"</p>
-                       <p class="text-[9px] font-bold opacity-50 mt-2 uppercase text-yellow-700 dark:text-yellow-400">Is this your exact security phrase?</p>
-                    </div>
-
-                    <div class="space-y-2">
-                      <label class="text-[10px] font-black uppercase opacity-40 px-1">Password</label>
-                      <div class="relative">
-                        <input type="password" id="authPasswordInput" value="${state.form.authPassword}" oninput="state.form.authPassword = this.value" class="w-full p-5 pr-12 rounded-2xl border-2 border-slate-500/20 dark:border-[#333] font-black outline-none bg-transparent focus:border-black dark:focus:border-white" />
-                        <button type="button" id="btn-login-pass" onclick="togglePasswordVisibility('authPasswordInput', 'btn-login-pass')" class="absolute right-4 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-100 transition-opacity">
-                           <i data-lucide="eye" class="w-5 h-5"></i>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ` : ''}
-                <button type="submit" class="w-full py-5 rounded-3xl text-white font-black uppercase tracking-widest shadow-xl transition-all active:scale-95 ${state.sidebarAuthMode === 'login' ? 'bg-black dark:bg-white dark:text-black' : 'bg-purple-600'}">
+                ${authBlockHtml}
+                <button type="submit" class="w-full py-5 rounded-3xl text-white font-black uppercase tracking-widest shadow-xl transition-all active:scale-95 bg-black dark:bg-white dark:text-black">
                   ${state.isIdentityVerified ? 'Access Portal' : 'Verify ID'}
                 </button>
              </form>
@@ -1299,9 +1688,10 @@
                <div class="flex items-center gap-4 text-purple-600"><i data-lucide="user-cog" class="w-6 h-6"></i><h2 class="text-xl font-black uppercase tracking-tighter">Citizen Hub</h2></div>
              </div>
              <div class="px-8 pb-10 space-y-4">
-               ${filteredCitizens.map(citizen => `
-                 <div class="p-5 rounded-[2rem] border border-purple-500/20 bg-white dark:bg-[#1a1a1a] shadow-sm space-y-4">
-                   ${state.editingCitizenId === citizen.ic ? `
+               ${filteredCitizens.map(citizen => {
+                 let innerContent = '';
+                 if (state.editingCitizenId === citizen.ic) {
+                    innerContent = `
                      <div class="flex flex-col gap-3">
                        <label class="text-[9px] font-black uppercase opacity-40 px-1 -mb-2">Full Name</label>
                        <input type="text" id="edit-cit-name" value="${citizen.name}" class="w-full p-4 rounded-xl border-2 border-purple-500/20 dark:border-[#333] font-black outline-none bg-transparent focus:border-purple-500" />
@@ -1320,7 +1710,9 @@
                          <button onclick="saveCitizenEdit('${citizen.ic}')" class="px-6 py-3 rounded-xl bg-purple-600 text-white text-[9px] font-black uppercase hover:scale-105 transition-all shadow-md">Save Changes</button>
                        </div>
                      </div>
-                   ` : `
+                    `;
+                 } else {
+                    innerContent = `
                      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                        <div>
                          <h4 class="text-lg font-black uppercase">${citizen.name}</h4>
@@ -1328,9 +1720,12 @@
                        </div>
                        <button onclick="startEditCitizen('${citizen.ic}')" class="flex items-center gap-2 px-5 py-2 rounded-xl bg-purple-600 text-white font-black uppercase text-[9px] transition-transform active:scale-95 shadow-md"><i data-lucide="edit-3" class="w-3 h-3"></i> Edit Identity</button>
                      </div>
-                   `}
-                   <div class="pt-3 border-t border-purple-500/5">
-                     ${citizen.applications?.map(app => `
+                    `;
+                 }
+
+                 let appContent = '';
+                 if (citizen.applications && citizen.applications.length > 0) {
+                    appContent = citizen.applications.map(app => `
                        <div class="flex flex-col md:flex-row md:items-center justify-between p-3 rounded-xl bg-black/5 dark:bg-[#111] mb-2 gap-3">
                          <p class="font-black text-[10px] uppercase">${app.name}</p>
                          <div class="flex items-center gap-1 bg-white dark:bg-[#1a1a1a] p-1 rounded-xl shadow-sm border border-slate-200 dark:border-[#333] self-start md:self-auto">
@@ -1339,10 +1734,18 @@
                            <button onclick="switchAppStatus('${citizen.ic}', '${app.id}', 'Rejected')" class="px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${app.status === 'Rejected' ? 'bg-red-500 text-white shadow-md' : 'text-slate-400 hover:text-red-500'}">Reject</button>
                          </div>
                        </div>
-                     `).join('') || ''}
+                    `).join('');
+                 }
+
+                 return `
+                 <div class="p-5 rounded-[2rem] border border-purple-500/20 bg-white dark:bg-[#1a1a1a] shadow-sm space-y-4">
+                   ${innerContent}
+                   <div class="pt-3 border-t border-purple-500/5">
+                     ${appContent}
                    </div>
                  </div>
-               `).join('')}
+                 `;
+               }).join('')}
              </div>
           </div>
         `;
@@ -1434,22 +1837,54 @@
       if(searchContainer) searchContainer.style.display = 'block';
 
       const sq = state.searchQuery.toLowerCase();
+      const hasFilters = Object.values(state.filters).some(val => val !== '');
       
-      const filterCategory = (cat) => {
-        if (cat.title.en.toLowerCase().includes(sq)) return true;
-        return cat.items.some(it => it.en.toLowerCase().includes(sq) || it.desc.toLowerCase().includes(sq));
-      };
+      const filteredServices = state.services.map(cat => {
+        const titleMatch = sq ? cat.title.en.toLowerCase().includes(sq) : false;
+        
+        const matchedItems = cat.items.filter(it => {
+          let searchMatch = true;
+          if (sq && !titleMatch) {
+            searchMatch = it.en.toLowerCase().includes(sq) || (it.desc && it.desc.toLowerCase().includes(sq));
+          }
+          
+          let filterMatch = true;
+          if (hasFilters) {
+             filterMatch = itemMatchesFilters(it, cat.title.en, state.filters);
+          }
+          
+          return searchMatch && filterMatch;
+        });
 
-      const studentServices = state.services.filter(s => s.group === "student" && (sq ? filterCategory(s) : true));
-      const sarawakServices = state.services.filter(s => s.group === "service" && (sq ? filterCategory(s) : true));
+        const finalItems = (titleMatch && !hasFilters) ? cat.items : matchedItems;
+        return { ...cat, items: finalItems, titleMatch };
+      }).filter(cat => cat.items.length > 0 || (cat.titleMatch && !hasFilters));
+
+      const studentServices = filteredServices.filter(s => s.group === "student");
+      const sarawakServices = filteredServices.filter(s => s.group === "service");
 
       let html = `<div class="space-y-16">`;
 
       const renderCategory = (cat) => {
-        const isExpanded = state.expandedCategoryId === cat.id || sq.length > 0;
-        
-        const titleMatch = cat.title.en.toLowerCase().includes(sq);
-        const filteredItems = (sq && !titleMatch) ? cat.items.filter(it => it.en.toLowerCase().includes(sq) || it.desc.toLowerCase().includes(sq)) : cat.items;
+        const isExpanded = state.expandedCategoryId === cat.id || sq.length > 0 || hasFilters;
+        const filteredItems = cat.items;
+
+        let itemsHtml = '';
+        if (filteredItems && filteredItems.length > 0) {
+           itemsHtml = filteredItems.map(item => `
+             <div class="p-4 border-b border-slate-500/10 dark:border-[#222] group last:border-none">
+               ${item.link !== "#" 
+                 ? `<a href="${item.link}" target="_blank" rel="noopener noreferrer" class="font-black uppercase text-sm block hover:text-yellow-600 transition-colors text-blue-600 dark:text-blue-400 leading-tight">${item.en}</a>`
+                 : `<span class="font-black uppercase text-sm block text-slate-500 dark:text-slate-400 cursor-not-allowed leading-tight">${item.en}</span>`
+               }
+               <p class="text-[10px] opacity-60 italic text-slate-600 dark:text-slate-400 mt-2">
+                 ${item.link === "#" ? (item.desc || "Link Not Available") : "Online Portal Available"}
+               </p>
+             </div>
+           `).join('');
+        } else {
+           itemsHtml = `<p class="text-xs opacity-40 text-center py-4 font-bold">No matching services found within this category.</p>`;
+        }
 
         return `
           <div id="cat-container-${cat.id}" class="rounded-[2.5rem] border-2 transition-all duration-500 overflow-hidden ${isExpanded ? 'border-yellow-500 shadow-lg' : 'border-slate-800/10 dark:border-[#222]'}">
@@ -1468,18 +1903,7 @@
             <div id="cat-content-wrapper-${cat.id}" class="grid transition-all duration-500 ease-in-out ${isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}">
               <div class="overflow-hidden">
                 <div class="px-6 md:px-8 pb-10 space-y-4 text-left border-t border-slate-500/10 dark:border-[#222] pt-4 bg-slate-50/50 dark:bg-[#0a0a0a]">
-                  ${filteredItems.map(item => `
-                    <div class="p-4 border-b border-slate-500/10 dark:border-[#222] group last:border-none">
-                      ${item.link !== "#" 
-                        ? `<a href="${item.link}" target="_blank" rel="noopener noreferrer" class="font-black uppercase text-sm block hover:text-yellow-600 transition-colors text-blue-600 dark:text-blue-400 leading-tight">${item.en}</a>`
-                        : `<span class="font-black uppercase text-sm block text-slate-500 dark:text-slate-400 cursor-not-allowed leading-tight">${item.en}</span>`
-                      }
-                      <p class="text-[10px] opacity-60 italic text-slate-600 dark:text-slate-400 mt-2">
-                        ${item.link === "#" ? (item.desc || "Link Not Available") : "Online Portal Available"}
-                      </p>
-                    </div>
-                  `).join('')}
-                  ${filteredItems.length === 0 ? `<p class="text-xs opacity-40 text-center py-4 font-bold">No matching services found within this category.</p>` : ''}
+                  ${itemsHtml}
                 </div>
               </div>
             </div>
@@ -1510,7 +1934,7 @@
       }
       
       if (studentServices.length === 0 && sarawakServices.length === 0) {
-        html += `<div class="py-20 text-center opacity-40"><i data-lucide="file-search" class="w-16 h-16 mx-auto mb-4"></i><p class="font-black uppercase tracking-widest text-sm">No services matched your search</p></div>`;
+        html += `<div class="py-20 text-center opacity-40"><i data-lucide="file-search" class="w-16 h-16 mx-auto mb-4"></i><p class="font-black uppercase tracking-widest text-sm">No services matched your search or filters.</p></div>`;
       }
 
       html += `</div>`;
@@ -1530,7 +1954,25 @@
               <p class="text-sm font-bold opacity-30 uppercase tracking-[0.6em]">Official Sarawak Digital Identity</p>
             </div>
             ${state.authError ? `<div class="mb-10 p-6 rounded-3xl bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-black uppercase flex items-center gap-4 animate-shake"><i data-lucide="alert-triangle" class="w-6 h-6"></i> ${state.authError}</div>` : ''}
-            
+
+            <!-- Profile Photo Upload -->
+            <div class="flex flex-col items-center mb-12">
+              <div class="relative">
+                <div class="w-28 h-28 rounded-[2.5rem] overflow-hidden border-4 border-slate-200 dark:border-[#333] bg-slate-500/10 flex items-center justify-center cursor-pointer shadow-xl" onclick="document.getElementById('signupAvatarInput').click()">
+                  <div id="signup-avatar-wrap" class="w-full h-full flex items-center justify-center">
+                    ${state.form.signupProfileImage
+                      ? `<img src="${state.form.signupProfileImage}" class="w-full h-full object-cover" alt="Profile" />`
+                      : `<i data-lucide="user" class="w-14 h-14 text-slate-400"></i>`}
+                  </div>
+                </div>
+                <button type="button" onclick="document.getElementById('signupAvatarInput').click()" class="absolute -bottom-2 -right-2 p-3 rounded-2xl bg-yellow-500 text-black shadow-lg hover:scale-110 active:scale-95 transition-all">
+                  <i data-lucide="camera" class="w-4 h-4"></i>
+                </button>
+                <input type="file" id="signupAvatarInput" class="hidden" accept="image/*" onchange="handleSignupImageUpload(event)" />
+              </div>
+              <p class="text-[9px] font-black uppercase opacity-30 tracking-widest mt-5">Profile Photo <span class="opacity-60">(Optional)</span></p>
+            </div>
+
             <form onsubmit="handleSignupSubmit(event)" class="grid grid-cols-1 lg:grid-cols-2 gap-16">
                <div class="space-y-8">
                   <h5 class="text-xs font-black uppercase opacity-20 tracking-widest border-b pb-4 border-slate-500/10 dark:border-[#333]">Personal Details</h5>
@@ -1588,16 +2030,16 @@
                 <div class="space-y-4 text-left">
                   <label class="text-xs font-black uppercase opacity-40 px-2">Create Password</label>
                   <div class="relative">
-                    <input required type="${state.showPassword ? 'text' : 'password'}" id="suPass" value="${state.form.authPassword}" class="w-full p-6 pr-14 rounded-[2rem] border-2 border-slate-500/20 dark:border-[#333] font-black outline-none bg-transparent focus:border-yellow-500 text-2xl" />
-                    <button type="button" id="btn-su-pass" onclick="togglePasswordVisibility('suPass', 'btn-su-pass')" class="absolute right-6 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-100 transition-opacity"><i data-lucide="${state.showPassword ? 'eye-off' : 'eye'}" class="w-6 h-6"></i></button>
+                    <input required type="password" id="suPass" value="${state.form.authPassword}" class="w-full p-6 pr-14 rounded-[2rem] border-2 border-slate-500/20 dark:border-[#333] font-black outline-none bg-transparent focus:border-yellow-500 text-2xl" />
+                    <button type="button" id="btn-su-pass" onclick="togglePasswordVisibility('suPass', 'btn-su-pass')" class="absolute right-6 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-100 transition-opacity"><i data-lucide="eye" class="w-6 h-6"></i></button>
                   </div>
                   <p class="text-[9px] opacity-40 italic px-4">Must be 8+ characters, include upper/lowercase, number, and symbol.</p>
                 </div>
                 <div class="space-y-4 text-left">
                   <label class="text-xs font-black uppercase opacity-40 px-2">Confirm Password</label>
                   <div class="relative">
-                    <input required type="${state.showPassword ? 'text' : 'password'}" id="suConf" value="${state.form.confirmPassword}" class="w-full p-6 pr-14 rounded-[2rem] border-2 border-slate-500/20 dark:border-[#333] font-black outline-none bg-transparent focus:border-yellow-500 text-2xl" />
-                    <button type="button" id="btn-su-conf" onclick="togglePasswordVisibility('suConf', 'btn-su-conf')" class="absolute right-6 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-100 transition-opacity"><i data-lucide="${state.showPassword ? 'eye-off' : 'eye'}" class="w-6 h-6"></i></button>
+                    <input required type="password" id="suConf" value="${state.form.confirmPassword}" class="w-full p-6 pr-14 rounded-[2rem] border-2 border-slate-500/20 dark:border-[#333] font-black outline-none bg-transparent focus:border-yellow-500 text-2xl" />
+                    <button type="button" id="btn-su-conf" onclick="togglePasswordVisibility('suConf', 'btn-su-conf')" class="absolute right-6 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-100 transition-opacity"><i data-lucide="eye" class="w-6 h-6"></i></button>
                   </div>
                 </div>
                 <button type="submit" class="w-full py-8 rounded-[2.5rem] bg-yellow-500 text-black font-black uppercase tracking-widest shadow-xl transform active:scale-95 text-xl">Continue to Final Review</button>
@@ -1611,6 +2053,7 @@
           <div class="animate-in zoom-in-95 py-32 text-center max-w-2xl mx-auto">
              <i data-lucide="shield-alert" class="w-24 h-24 text-red-500 mx-auto mb-10 animate-pulse"></i>
              <h3 class="text-5xl font-black uppercase mb-8">Ready to Start?</h3>
+             ${state.authError ? `<div class="mb-10 p-6 rounded-3xl bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-black uppercase flex items-center gap-4 animate-shake text-left"><i data-lucide="alert-triangle" class="w-6 h-6 shrink-0"></i> ${state.authError}</div>` : ''}
              <div class="p-10 rounded-[3rem] border-2 border-red-500/20 bg-red-500/5 mb-10 text-left shadow-inner dark:bg-[#111] dark:border-red-500/30"><p class="text-lg font-medium leading-relaxed opacity-80 text-justify">${UI_TEXT.signUpWarning}</p></div>
              <button onclick="handleSignupSubmit(event)" class="w-full py-8 rounded-[2.5rem] bg-black text-white dark:bg-white dark:text-black font-black uppercase tracking-widest shadow-2xl hover:scale-[1.02] active:scale-95 transition-all text-xl text-center">Agree & Enter Homepage</button>
              <button type="button" onclick="state.signUpStep=2; renderSignupModal();" class="w-full py-4 text-[10px] font-black uppercase opacity-40 mt-4">Back to Security</button>
