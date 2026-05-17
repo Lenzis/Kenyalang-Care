@@ -759,47 +759,172 @@
       }
     };
 
-    window.handleFilter = (key, val) => {
-      state.filters[key] = val;
-      const hasFilters = Object.values(state.filters).some(v => v !== '');
-      const resetBtn = document.getElementById('reset-filter-container');
-      if (resetBtn) resetBtn.style.display = hasFilters ? 'flex' : 'none';
-      renderCatalog();
-    };
+// Base Class
+class KenyalangCare 
+{
+  constructor(systemId) 
+  {
+    this.systemId = systemId;
+  }
+}
 
-    window.resetFilters = () => {
-      state.filters = { marital: '', age: '', employment: '', income: '' };
-      ['marital', 'age', 'employment', 'income'].forEach(id => {
-        const el = document.getElementById(`filter-${id}`);
-        if(el) el.value = '';
-      });
-      const resetBtn = document.getElementById('reset-filter-container');
-      if (resetBtn) resetBtn.style.display = 'none';
-      renderCatalog();
-    };
+// Encapsulation & Exception Handling 
+class Applicant extends KenyalangCare 
+{
+  // #filters is encapsulated private field  to protect it from direct modification
+  #filters;
 
-    function itemMatchesFilters(item, catTitle, filters) {
-        const text = (catTitle + " " + item.en + " " + (item.desc || "")).toLowerCase();
-        let matches = true;
+  constructor(systemId) 
+  {
+    super(systemId);
+    this.#filters = { marital: '', age: '', employment: '', income: '' };
+  }
 
-        if (filters.marital === 'married') matches = matches && /(ibu bersalin|bib|endowment|efs|marriage|married|kahwin|poligami|ruju|anak|isteri|suami)/i.test(text);
-        if (filters.marital === 'divorced') matches = matches && /(divorce|widow|cerai|iddah|fasakh|khulu|ta'liq|zihar|nusyuz|janda|duda)/i.test(text);
-        if (filters.marital === 'single') matches = matches && /(scholarship|biasiswa|student|job|pinjaman|youth|aids|sekolah|bujang)/i.test(text);
+  // Getter allows safe reading
+  get filters() 
+  {
+    return this.#filters;
+  }
 
-        if (filters.age === 'child') matches = matches && /(endowment|efs|school|student|child|anak|sekolah)/i.test(text);
-        if (filters.age === 'adult') matches = matches && /(i - gps|biasiswa|job|marriage|business|licence|permit|contractor|water|land|strata|kahwin|dewasa)/i.test(text);
-        if (filters.age === 'senior') matches = matches && /(kenyalang|kgc|senior|schb|warga emas)/i.test(text);
-
-        if (filters.employment === 'student') matches = matches && /(biasiswa|pinjaman|student|school|i - gps|tuition|sekolah)/i.test(text);
-        if (filters.employment === 'unemployed') matches = matches && /(geran pelancaran|gp|skas|bantuan|welfare|aids|kebajikan)/i.test(text);
-        if (filters.employment === 'employed') matches = matches && /(business|trade|procurement|wireman|pipe fitter|contractor|licence|permit|water|land|pekerja)/i.test(text);
-
-        if (filters.income === 'b40') matches = matches && /(skas|senior|schb|public housing|bantuan|aids|welfare|kebajikan)/i.test(text);
-        if (filters.income === 'm40') matches = matches && /(pinjaman|water|land|hydro|utilities)/i.test(text);
-        if (filters.income === 't20') matches = matches && /(business|trade|permit|licence|premium|strata|contractor)/i.test(text);
-
-        return matches;
+  // Exception Handling controls writing
+  updateFilter(key, value) 
+  {
+    try 
+    {
+      if (!['marital', 'age', 'employment', 'income'].includes(key)) 
+      {
+        // Throw exception if an invalid filter category is passed
+        throw new Error(`Invalid filter category: ${key}`);
+      }
+      this.#filters[key] = value;
+    } catch (error) 
+    {
+      console.error("System Exception Caught: " + error.message);
+    } finally 
+    {
+      console.log(`Applicant filter evaluation completed for: ${key}`);
     }
+  }
+
+  resetFilters() 
+  {
+    this.#filters = { marital: '', age: '', employment: '', income: '' };
+  }
+}
+
+// Inheritance - AssistanceProgram inherits from KenyalangCare
+class AssistanceProgram extends KenyalangCare 
+{
+  constructor(systemId, item, catTitle) 
+  {
+    super(systemId);
+    this.title = item.en;
+    this.desc = item.desc || "";
+    this.textToSearch = (catTitle + " " + this.title + " " + this.desc).toLowerCase();
+  }
+
+  // Base Method to be overridden
+  evaluateEligibility(filters) 
+  {
+    // Base logic for regex keyword matching
+    let matches = true;
+    if (filters.marital === 'married') matches = matches && /(ibu bersalin|bib|endowment|efs|marriage|married|kahwin|poligami|ruju|anak|isteri|suami)/i.test(this.textToSearch);
+    if (filters.marital === 'divorced') matches = matches && /(divorce|widow|cerai|iddah|fasakh|khulu|ta'liq|zihar|nusyuz|janda|duda)/i.test(this.textToSearch);
+    if (filters.marital === 'single') matches = matches && /(scholarship|biasiswa|student|job|pinjaman|youth|aids|sekolah|bujang)/i.test(this.textToSearch);
+
+    if (filters.age === 'child') matches = matches && /(endowment|efs|school|student|child|anak|sekolah)/i.test(this.textToSearch);
+    if (filters.age === 'adult') matches = matches && /(i - gps|biasiswa|job|marriage|business|licence|permit|contractor|water|land|strata|kahwin|dewasa)/i.test(this.textToSearch);
+    if (filters.age === 'senior') matches = matches && /(kenyalang|kgc|senior|schb|warga emas)/i.test(this.textToSearch);
+
+    if (filters.employment === 'student') matches = matches && /(biasiswa|pinjaman|student|school|i - gps|tuition|sekolah)/i.test(this.textToSearch);
+    if (filters.employment === 'unemployed') matches = matches && /(geran pelancaran|gp|skas|bantuan|welfare|aids|kebajikan)/i.test(this.textToSearch);
+    if (filters.employment === 'employed') matches = matches && /(business|trade|procurement|wireman|pipe fitter|contractor|licence|permit|water|land|pekerja)/i.test(this.textToSearch);
+
+    if (filters.income === 'b40') matches = matches && /(skas|senior|schb|public housing|bantuan|aids|welfare|kebajikan)/i.test(this.textToSearch);
+    if (filters.income === 'm40') matches = matches && /(pinjaman|water|land|hydro|utilities)/i.test(this.textToSearch);
+    if (filters.income === 't20') matches = matches && /(business|trade|permit|licence|premium|strata|contractor)/i.test(this.textToSearch);
+    
+    return matches;
+  }
+}
+
+// Polymorphism - Method Overriding
+class EducationProgram extends AssistanceProgram 
+{
+  // Overriding the parent's evaluateEligibility method
+  evaluateEligibility(filters) 
+  {
+    let matches = super.evaluateEligibility(filters); 
+    // If they are a senior citizen, reject student aids instantly
+    if (filters.age === 'senior') 
+    {
+        matches = false; 
+    }
+    return matches;
+  }
+}
+
+class FinancialProgram extends AssistanceProgram 
+{
+  // Overriding the parent's evaluateEligibility method
+  evaluateEligibility(filters) 
+  {
+    let matches = super.evaluateEligibility(filters); // Inherit base logic
+    // If they are T20 (High Income), reject financial relief grants instantly
+    if (filters.income === 't20' && /(bantuan|relief|skas)/i.test(this.textToSearch)) 
+    {
+        matches = false; 
+    }
+    return matches;
+  }
+}
+
+// Instantiate Applicant
+const activeApplicant = new Applicant("USR-LIVE");
+
+window.handleFilter = (key, val) => 
+{
+  // Use Encapsulation setter instead of modifying state directly
+  activeApplicant.updateFilter(key, val);
+  state.filters = activeApplicant.filters; // Sync with UI
+  
+  const hasFilters = Object.values(state.filters).some(v => v !== '');
+  const resetBtn = document.getElementById('reset-filter-container');
+  if (resetBtn) resetBtn.style.display = hasFilters ? 'flex' : 'none';
+  renderCatalog();
+};
+
+window.resetFilters = () => 
+{
+  activeApplicant.resetFilters();
+  state.filters = activeApplicant.filters; // Sync with UI
+  
+  ['marital', 'age', 'employment', 'income'].forEach(id => 
+  {
+    const el = document.getElementById(`filter-${id}`);
+    if(el) el.value = '';
+  });
+  const resetBtn = document.getElementById('reset-filter-container');
+  if (resetBtn) resetBtn.style.display = 'none';
+  renderCatalog();
+};
+
+function itemMatchesFilters(item, catTitle, filters) 
+{
+  let programEvaluator;
+  
+  // Polymorphism in action: Instantiate different objects dynamically based on category
+  if (catTitle.toLowerCase().includes('student') || catTitle.toLowerCase().includes('biasiswa')) 
+  {
+      programEvaluator = new EducationProgram(item.id || Date.now(), item, catTitle);
+  } else 
+  {
+      programEvaluator = new FinancialProgram(item.id || Date.now(), item, catTitle);
+  }
+
+  // Executes the correct overridden method
+  return programEvaluator.evaluateEligibility(filters);
+}
 
     // --- Action Handlers ---
     window.handleVerifyIdentity = async (e) => {
